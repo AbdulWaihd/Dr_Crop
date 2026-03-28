@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -120,7 +121,7 @@ export default function Header() {
           />
           <div
             className="badge badge-success"
-            style={{ fontSize: 11 }}
+            style={{ fontSize: 11, marginRight: 8 }}
           >
             <span
               style={{
@@ -133,6 +134,7 @@ export default function Header() {
             />
             AI Online
           </div>
+          <ThemeToggle />
         </nav>
       </div>
     </header>

@@ -31,6 +31,36 @@
   --success-bg: rgba(74, 222, 128, 0.1);
 }
 
+[data-theme="light"] {
+  --bg-primary: #f8faf5;
+  --bg-secondary: #eef3eb;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fcfcfc;
+  --surface: #f1f5f9;
+  --surface-2: #e2e8f0;
+
+  --green-400: #22c55e;
+  --green-500: #16a34a;
+  --green-600: #15803d;
+  --green-glow: rgba(34, 197, 94, 0.15);
+  --green-glow-strong: rgba(34, 197, 94, 0.3);
+
+  --text-primary: #1a2e05;
+  --text-secondary: #166534;
+  --text-muted: #4b5563;
+  --text-dim: #9ca3af;
+
+  --border: #e2e8f0;
+  --border-bright: #cbd5e1;
+
+  --danger: #dc2626;
+  --danger-bg: rgba(220, 38, 38, 0.1);
+  --warning: #d97706;
+  --warning-bg: rgba(217, 119, 6, 0.1);
+  --success: #16a34a;
+  --success-bg: rgba(22, 163, 74, 0.1);
+}
+
 @theme inline {
   --color-background: var(--bg-primary);
   --color-foreground: var(--text-primary);
