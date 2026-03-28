@@ -2,6 +2,16 @@
 
 import { useLocale } from "@/contexts/LocaleContext";
 import { useRef, useState, useCallback, useEffect } from "react";
+import Image from "next/image";
+import { 
+  Camera, 
+  Image as ImageIcon, 
+  Upload, 
+  Leaf, 
+  Loader2, 
+  Zap,
+  X 
+} from "lucide-react";
 
 interface Props {
   onImageSelected: (file: File) => void;
@@ -119,26 +129,35 @@ export default function ImageUploader({
     [handleFile]
   );
 
+  const crops = [
+    { label: "Corn", key: "corn" },
+    { label: "Tomato", key: "tomato" },
+    { label: "Potato", key: "potato" },
+    { label: "Grape", key: "grape" },
+    { label: "Wheat", key: "wheat" },
+    { label: "Apple", key: "apple" },
+  ];
+
   return (
     <div style={{ width: "100%" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
         <button
           type="button"
           onClick={startLiveCamera}
           disabled={loading || cameraOpen}
           className="btn-primary"
-          style={{ fontSize: 14 }}
+          style={{ fontSize: 13, gap: 10, padding: "12px 16px" }}
         >
-          <CameraIcon />           {t("uploadLiveCamera")}
+          <Camera size={18} /> {t("uploadLiveCamera")}
         </button>
         <button
           type="button"
           onClick={() => cameraInputRef.current?.click()}
           disabled={loading}
           className="btn-secondary"
-          style={{ fontSize: 14 }}
+          style={{ fontSize: 13, gap: 10, padding: "12px 16px" }}
         >
-          <CameraIcon /> {t("uploadQuickCapture")}
+          <Zap size={18} /> {t("uploadQuickCapture")}
         </button>
       </div>
 
@@ -149,27 +168,31 @@ export default function ImageUploader({
           onClick={() => galleryInputRef.current?.click()}
           disabled={loading}
           className="btn-secondary"
-          style={{ flex: 1 }}
+          style={{ flex: 1, gap: 10 }}
         >
-          <GalleryIcon />
+          <ImageIcon size={18} />
           {t("uploadGallery")}
         </button>
       </div>
 
       {cameraError && (
-        <p
+        <div
           style={{
             fontSize: 12,
             color: "var(--warning)",
-            marginBottom: 10,
-            padding: "8px 12px",
-            background: "rgba(250,204,21,0.08)",
-            borderRadius: 10,
-            border: "1px solid rgba(250,204,21,0.25)",
+            marginBottom: 12,
+            padding: "10px 14px",
+            background: "var(--warning-bg)",
+            borderRadius: 12,
+            border: "1px solid var(--border)",
+            display: "flex",
+            alignItems: "center",
+            gap: 8
           }}
         >
+          <Loader2 size={14} className="animate-spin" />
           {cameraError}
-        </p>
+        </div>
       )}
 
       <input
@@ -194,7 +217,8 @@ export default function ImageUploader({
             position: "fixed",
             inset: 0,
             zIndex: 100,
-            background: "rgba(0,0,0,0.85)",
+            background: "rgba(4,7,5,0.95)",
+            backdropFilter: "blur(10px)",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -202,18 +226,18 @@ export default function ImageUploader({
             padding: 16,
           }}
         >
-          <div style={{ width: "100%", maxWidth: 480, borderRadius: 16, overflow: "hidden", border: "1px solid var(--border)" }}>
+          <div style={{ width: "100%", maxWidth: 480, borderRadius: 24, overflow: "hidden", border: "1px solid var(--border-bright)", boxShadow: "0 20px 50px rgba(0,0,0,0.5)" }}>
             <video ref={videoRef} playsInline muted autoPlay className="w-full aspect-video object-cover" style={{ display: "block", background: "#000" }} />
-            <div style={{ display: "flex", gap: 8, padding: 12, background: "var(--surface)" }}>
+            <div style={{ display: "flex", gap: 12, padding: 16, background: "var(--surface)" }}>
               <button type="button" onClick={captureFrame} disabled={loading} className="btn-primary" style={{ flex: 1 }}>
                 {t("uploadCaptureCrop")}
               </button>
-              <button type="button" onClick={stopLiveCamera} className="btn-ghost">
-                {t("cameraCancel")}
+              <button type="button" onClick={stopLiveCamera} className="btn-ghost" style={{ padding: "0 20px" }}>
+                <X size={20} />
               </button>
             </div>
           </div>
-          <p style={{ color: "var(--text-muted)", fontSize: 12, marginTop: 12, textAlign: "center", maxWidth: 400 }}>
+          <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 16, textAlign: "center", maxWidth: 320, lineHeight: 1.5 }}>
             {t("cameraOverlayHelp")}
           </p>
         </div>
@@ -225,66 +249,61 @@ export default function ImageUploader({
         onDragLeave={onDragLeave}
         onDrop={onDrop}
         onClick={() => galleryInputRef.current?.click()}
+        style={{ minHeight: 180, display: "flex", alignItems: "center", justifyContent: "center" }}
         id="drop-zone-area"
       >
         {preview ? (
-          <div style={{ position: "relative", display: "inline-block" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+          <div style={{ position: "relative", width: "100%", height: 220, borderRadius: 16, overflow: "hidden" }}>
+            <Image
               src={preview}
-              alt=""
-              style={{
-                maxHeight: 220,
-                maxWidth: "100%",
-                borderRadius: 12,
-                objectFit: "contain",
-                display: "block",
-                margin: "0 auto",
-              }}
+              alt="Crop preview"
+              fill
+              className="object-contain"
+              unoptimized // Blobs don't need optimization from Next.js server
             />
             {loading && (
               <div
                 style={{
                   position: "absolute",
                   inset: 0,
-                  background: "rgba(10,15,13,0.7)",
-                  borderRadius: 12,
+                  background: "rgba(4,7,5,0.75)",
+                  backdropFilter: "blur(4px)",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 8,
+                  gap: 12,
                 }}
               >
-                <SpinnerIcon size={36} />
-                <p style={{ color: "var(--green-400)", fontSize: 13, fontWeight: 600 }}>
+                <Loader2 size={40} className="animate-spin text-emerald-400" />
+                <p style={{ color: "var(--text-primary)", fontSize: 14, fontWeight: 700, letterSpacing: "0.02em" }}>
                   {t("uploadAnalyzing")}
                 </p>
               </div>
             )}
           </div>
         ) : (
-          <div>
+          <div style={{ textAlign: "center" }}>
             <div
               style={{
-                width: 56,
-                height: 56,
-                borderRadius: 16,
-                background: "var(--green-glow)",
-                border: "1px solid rgba(74,222,128,0.2)",
+                width: 60,
+                height: 60,
+                borderRadius: 20,
+                background: "var(--success-bg)",
+                border: "1px solid var(--border)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                margin: "0 auto 16px",
-                fontSize: 28,
+                margin: "0 auto 20px",
+                color: "var(--emerald-400)",
               }}
             >
-              🍃
+              <Upload size={28} />
             </div>
-            <p style={{ color: "var(--text-secondary)", fontSize: 14, fontWeight: 500, marginBottom: 6 }}>
+            <p style={{ color: "var(--text-primary)", fontSize: 15, fontWeight: 700, marginBottom: 8, letterSpacing: "-0.01em" }}>
               {t("uploadDrop")}
             </p>
-            <p style={{ color: "var(--text-muted)", fontSize: 12 }}>
+            <p style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 500 }}>
               {t("uploadFormats")}
             </p>
           </div>
@@ -295,49 +314,22 @@ export default function ImageUploader({
         <div
           id="crops"
           style={{
-            marginTop: 20,
+            marginTop: 24,
             display: "flex",
             flexWrap: "wrap",
-            gap: 8,
+            gap: 10,
             justifyContent: "center",
           }}
           className="animate-fade-in delay-200"
         >
-          {["🌽 Corn", "🍅 Tomato", "🥔 Potato", "🍇 Grape", "🌾 Wheat", "🍎 Apple"].map((crop) => (
-            <span key={crop} className="feature-pill" style={{ fontSize: 12 }}>
-              {crop}
+          {crops.map((crop) => (
+            <span key={crop.key} className="feature-pill" style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", padding: "8px 14px" }}>
+              <Leaf size={12} strokeWidth={2.5} />
+              {crop.label}
             </span>
           ))}
         </div>
       )}
     </div>
-  );
-}
-
-function CameraIcon() {
-  return (
-    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
-  );
-}
-
-function GalleryIcon() {
-  return (
-    <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ display: "inline", verticalAlign: "middle", marginRight: 6 }}>
-      <rect x="3" y="3" width="18" height="18" rx="3" strokeLinecap="round" strokeLinejoin="round" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 15l5-5 4 4 3-3 6 6" />
-      <circle cx="8.5" cy="8.5" r="1.5" />
-    </svg>
-  );
-}
-
-function SpinnerIcon({ size = 20 }: { size?: number }) {
-  return (
-    <svg className="animate-spin" width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.25" />
-      <path fill="currentColor" opacity="0.75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-    </svg>
   );
 }

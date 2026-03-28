@@ -1,8 +1,6 @@
-"use client";
-
 import { useLocale } from "@/contexts/LocaleContext";
 import { LOCALES, type Locale } from "@/lib/i18n";
-import ThemeToggle from "./ThemeToggle";
+import { Sprout, Activity } from "lucide-react";
 
 const LOCALE_LABELS: Record<Locale, string> = {
   en: "EN",
@@ -18,7 +16,7 @@ export default function Header() {
       <div className="app-header__inner">
         <div className="app-header__brand">
           <div className="app-header__logo animate-pulse-glow" aria-hidden>
-            🌿
+            <Sprout size={22} strokeWidth={2.5} />
           </div>
           <div>
             <h1 className="app-header__title">{t("headerTitle")}</h1>
@@ -51,18 +49,9 @@ export default function Header() {
           </a>
           <span className="app-header__divider" aria-hidden />
           <div className="badge badge-success app-header__badge">
-            <span
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                background: "var(--success)",
-                display: "inline-block",
-              }}
-            />
+            <Activity size={12} strokeWidth={3} />
             {t("badgeOnline")}
           </div>
-          <ThemeToggle />
         </nav>
       </div>
     </header>

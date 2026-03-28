@@ -1,6 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { 
+  Eye, 
+  Search, 
+  CloudSun, 
+  Zap, 
+  Camera, 
+  Cpu, 
+  Lightbulb, 
+  MapPin, 
+  AlertTriangle,
+  X,
+  Sprout
+} from "lucide-react";
 import FarmCopilot from "@/components/FarmCopilot";
 import ImageUploader from "@/components/ImageUploader";
 import ResultCard from "@/components/ResultCard";
@@ -123,16 +136,16 @@ export default function HomePage() {
   };
 
   const stats = [
-    { icon: "👁️", valueKey: "statVision" as const, labelKey: "statVisionLabel" as const },
-    { icon: "🔎", valueKey: "statExa" as const, labelKey: "statExaLabel" as const },
-    { icon: "🌦️", valueKey: "statLive" as const, labelKey: "statLiveLabel" as const },
-    { icon: "⚡", valueKey: "statTime" as const, labelKey: "statTimeLabel" as const },
+    { icon: <Eye size={18} />, valueKey: "statVision" as const, labelKey: "statVisionLabel" as const },
+    { icon: <Search size={18} />, valueKey: "statExa" as const, labelKey: "statExaLabel" as const },
+    { icon: <CloudSun size={18} />, valueKey: "statLive" as const, labelKey: "statLiveLabel" as const },
+    { icon: <Zap size={18} />, valueKey: "statTime" as const, labelKey: "statTimeLabel" as const },
   ];
 
   const steps = [
-    { step: "01", icon: "📸", titleKey: "how1Title" as const, descKey: "how1Desc" as const },
-    { step: "02", icon: "🧠", titleKey: "how2Title" as const, descKey: "how2Desc" as const },
-    { step: "03", icon: "💡", titleKey: "how3Title" as const, descKey: "how3Desc" as const },
+    { step: "01", icon: <Camera size={24} />, titleKey: "how1Title" as const, descKey: "how1Desc" as const },
+    { step: "02", icon: <Cpu size={24} />, titleKey: "how2Title" as const, descKey: "how2Desc" as const },
+    { step: "03", icon: <Lightbulb size={24} />, titleKey: "how3Title" as const, descKey: "how3Desc" as const },
   ];
 
   return (
@@ -148,42 +161,44 @@ export default function HomePage() {
             {!result && (
               <section
                 className="animate-fade-in-up"
-                style={{ textAlign: "center", padding: "48px 0 36px" }}
+                style={{ textAlign: "center", padding: "64px 0 40px" }}
               >
                 <div
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
                     gap: 8,
-                    background: "rgba(74,222,128,0.08)",
-                    border: "1px solid rgba(74,222,128,0.2)",
+                    background: "var(--success-bg)",
+                    border: "1px solid var(--border)",
                     borderRadius: 999,
-                    padding: "6px 16px",
-                    fontSize: 12,
-                    color: "var(--green-400)",
-                    fontWeight: 600,
-                    marginBottom: 20,
-                    letterSpacing: "0.03em",
+                    padding: "6px 14px",
+                    fontSize: 11,
+                    color: "var(--emerald-400)",
+                    fontWeight: 700,
+                    marginBottom: 24,
+                    letterSpacing: "0.05em",
+                    textTransform: "uppercase",
                   }}
                 >
+                  <Sprout size={12} strokeWidth={3} />
                   {t("heroBadge")}
                 </div>
 
                 <h2
                   style={{
-                    fontSize: "clamp(28px, 5vw, 42px)",
+                    fontSize: "clamp(32px, 6vw, 52px)",
                     fontWeight: 800,
                     color: "var(--text-primary)",
-                    letterSpacing: "-0.03em",
-                    lineHeight: 1.15,
-                    marginBottom: 14,
+                    letterSpacing: "-0.04em",
+                    lineHeight: 1.05,
+                    marginBottom: 20,
                   }}
                 >
                   {t("heroTitle")}
                   <br />
                   <span
                     style={{
-                      background: "linear-gradient(135deg, #4ade80, #22c55e)",
+                      background: "linear-gradient(135deg, var(--emerald-400), var(--emerald-500))",
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",
                     }}
@@ -193,9 +208,9 @@ export default function HomePage() {
                 </h2>
                 <p
                   style={{
-                    fontSize: 15,
+                    fontSize: 16,
                     color: "var(--text-muted)",
-                    maxWidth: 440,
+                    maxWidth: 480,
                     margin: "0 auto",
                     lineHeight: 1.7,
                   }}
@@ -207,28 +222,30 @@ export default function HomePage() {
 
             {!result && (
               <div
-                className="animate-fade-in-up delay-100"
+                className="animate-fade-in-up"
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(4, 1fr)",
-                  gap: 10,
-                  marginBottom: 20,
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 12,
+                  marginBottom: 32,
+                  justifyContent: "center"
                 }}
               >
                 {stats.map(({ icon, valueKey, labelKey }) => (
-                  <div key={labelKey} className="stat-card" style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 20, marginBottom: 4 }}>{icon}</div>
+                  <div key={labelKey} className="stat-card" style={{ flex: "1 1 calc(25% - 12px)", minWidth: 120, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "16px 8px" }}>
+                    <div style={{ color: "var(--emerald-400)", marginBottom: 10, opacity: 0.8 }}>{icon}</div>
                     <div
                       style={{
-                        fontSize: 17,
+                        fontSize: 18,
                         fontWeight: 800,
-                        color: "var(--green-400)",
+                        color: "var(--text-primary)",
                         letterSpacing: "-0.02em",
+                        lineHeight: 1
                       }}
                     >
                       {t(valueKey)}
                     </div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+                    <div style={{ fontSize: 9, color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginTop: 6, opacity: 0.8 }}>
                       {t(labelKey)}
                     </div>
                   </div>
@@ -249,9 +266,12 @@ export default function HomePage() {
                       marginBottom: 16,
                       paddingBottom: 14,
                       borderBottom: "1px solid var(--border)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8
                     }}
                   >
-                    📍 {t("geoNotice")}
+                    <MapPin size={14} className="text-emerald-400" /> {t("geoNotice")}
                   </p>
                   <ImageUploader
                     onImageSelected={handleImageSelected}
@@ -268,7 +288,7 @@ export default function HomePage() {
                         marginTop: 16,
                         padding: "12px 16px",
                         background: "var(--danger-bg)",
-                        border: "1px solid rgba(248,113,113,0.3)",
+                        border: "1px solid var(--border)",
                         borderRadius: 12,
                         color: "var(--danger)",
                         fontSize: 13,
@@ -277,7 +297,7 @@ export default function HomePage() {
                         gap: 8,
                       }}
                     >
-                      <span style={{ fontSize: 16 }}>⚠️</span>
+                      <AlertTriangle size={16} />
                       {error}
                       <button
                         type="button"
@@ -288,11 +308,10 @@ export default function HomePage() {
                           border: "none",
                           color: "var(--danger)",
                           cursor: "pointer",
-                          fontSize: 16,
-                          lineHeight: 1,
+                          display: "flex"
                         }}
                       >
-                        ×
+                        <X size={16} />
                       </button>
                     </div>
                   )}
@@ -318,18 +337,19 @@ export default function HomePage() {
                 className="animate-fade-in-up delay-300"
                 style={{ marginTop: 48 }}
               >
-                <div style={{ textAlign: "center", marginBottom: 28 }}>
+                <div style={{ textAlign: "center", marginBottom: 32 }}>
                   <h3
                     style={{
-                      fontSize: 20,
+                      fontSize: 22,
                       fontWeight: 700,
                       color: "var(--text-primary)",
                       marginBottom: 8,
+                      letterSpacing: "-0.02em"
                     }}
                   >
                     {t("howWorksTitle")}
                   </h3>
-                  <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
+                  <p style={{ fontSize: 14, color: "var(--text-muted)" }}>
                     {t("howWorksSubtitle")}
                   </p>
                 </div>
@@ -338,34 +358,34 @@ export default function HomePage() {
                   style={{
                     display: "grid",
                     gridTemplateColumns: "repeat(3, 1fr)",
-                    gap: 14,
+                    gap: 16,
                   }}
                 >
                   {steps.map(({ step, icon, titleKey, descKey }) => (
-                    <div key={step} className="stat-card" style={{ padding: 18 }}>
+                    <div key={step} className="stat-card" style={{ padding: 20 }}>
                       <div
                         style={{
                           fontSize: 10,
-                          fontWeight: 700,
-                          color: "var(--green-600)",
-                          letterSpacing: "0.1em",
-                          marginBottom: 8,
+                          fontWeight: 800,
+                          color: "var(--emerald-500)",
+                          letterSpacing: "0.15em",
+                          marginBottom: 12,
                         }}
                       >
                         STEP {step}
                       </div>
-                      <div style={{ fontSize: 28, marginBottom: 10 }}>{icon}</div>
+                      <div style={{ color: "var(--text-secondary)", marginBottom: 14 }}>{icon}</div>
                       <h4
                         style={{
-                          fontSize: 13,
+                          fontSize: 15,
                           fontWeight: 700,
                           color: "var(--text-primary)",
-                          marginBottom: 6,
+                          marginBottom: 8,
                         }}
                       >
                         {t(titleKey)}
                       </h4>
-                      <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6 }}>
+                      <p style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6 }}>
                         {t(descKey)}
                       </p>
                     </div>
@@ -379,7 +399,7 @@ export default function HomePage() {
         <footer
           style={{
             borderTop: "1px solid var(--border)",
-            padding: "20px",
+            padding: "24px 20px",
             textAlign: "center",
           }}
         >
@@ -391,11 +411,11 @@ export default function HomePage() {
               justifyContent: "space-between",
               alignItems: "center",
               flexWrap: "wrap",
-              gap: 8,
+              gap: 12,
             }}
           >
-            <span style={{ fontSize: 12, color: "var(--text-dim)" }}>{t("footerLeft")}</span>
-            <span style={{ fontSize: 12, color: "var(--text-dim)" }}>{t("footerRight")}</span>
+            <span style={{ fontSize: 12, color: "var(--text-dim)", fontWeight: 500 }}>{t("footerLeft")}</span>
+            <span style={{ fontSize: 12, color: "var(--text-dim)", fontWeight: 500 }}>{t("footerRight")}</span>
           </div>
         </footer>
       </div>

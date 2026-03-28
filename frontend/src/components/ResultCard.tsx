@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useLocale } from "@/contexts/LocaleContext";
 import type { MessageKey } from "@/lib/i18n";
 import type {
@@ -9,6 +10,23 @@ import type {
   Recommendation,
   FieldConditions,
 } from "@/lib/types";
+import { 
+  CheckCircle, 
+  AlertCircle, 
+  TrendingUp, 
+  Wind, 
+  Thermometer, 
+  Droplets, 
+  Copy, 
+  RotateCcw, 
+  Info,
+  Waves,
+  Sun,
+  Dna,
+  Share2,
+  Activity,
+  Sprout
+} from "lucide-react";
 
 interface Props {
   prediction: PredictionResult;
@@ -75,7 +93,8 @@ export default function ResultCard({
 
   const handleCopyReport = () => {
     const lines = [
-      `Dr. Crop`,
+      `Dr. Crop Analysis Report`,
+      `=======================`,
       `${t("cropType")}: ${prediction.crop}`,
       `${t("condition")}: ${isHealthy ? t("noDisease") : prediction.disease}`,
       `${t("confidenceLabel")}: ${confidencePercent}%`,
@@ -90,15 +109,18 @@ export default function ResultCard({
     }
     if (recommendation && !isHealthy) {
       lines.push(
+        `[${t("tabTreatment")}]`,
         `${recommendation.treatment}`,
         ``,
+        `[${t("tabPrevention")}]`,
         `${recommendation.prevention}`,
         ``,
+        `[${t("tabFertilizer")}]`,
         `${recommendation.fertilizer}`
       );
     }
     if (recommendation && (hasYieldPlan || nonEmpty(yA))) {
-      lines.push(``);
+      lines.push(``, `--- Precision Agriculture Advice ---`);
       if (nonEmpty(yI)) lines.push(`${yI}`, ``);
       if (nonEmpty(yS)) lines.push(`${yS}`, ``);
       if (nonEmpty(yC)) lines.push(`${yC}`, ``);
@@ -114,34 +136,31 @@ export default function ResultCard({
 
   return (
     <div className="animate-fade-in-up" style={{ width: "100%", display: "flex", flexDirection: "column", gap: 16 }}>
-      <div className="glass-card glow-green-sm" style={{ padding: 20 }}>
-        <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+      <div className="glass-card" style={{ padding: 24, borderLeft: `4px solid ${isHealthy ? "var(--success)" : "var(--danger)"}` }}>
+        <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
           {preview && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={preview}
-              alt=""
-              style={{
-                width: 80,
-                height: 80,
-                borderRadius: 12,
-                objectFit: "cover",
-                border: "2px solid var(--border-bright)",
-                flexShrink: 0,
-              }}
-            />
+            <div style={{ position: "relative", width: 88, height: 88, borderRadius: 16, overflow: "hidden", border: "2px solid var(--border-bright)", flexShrink: 0 }}>
+              <Image
+                src={preview}
+                alt="Prediction source"
+                fill
+                className="object-cover"
+                unoptimized
+              />
+            </div>
           )}
 
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <h3 style={{ fontSize: 18, fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
                 {t("resultTitle")}
               </h3>
-              <span className={`badge ${isHealthy ? "badge-success" : "badge-danger"}`}>
+              <div className={`badge ${isHealthy ? "badge-success" : "badge-danger"}`} style={{ gap: 6, padding: "6px 14px", borderRadius: 10 }}>
+                {isHealthy ? <CheckCircle size={14} strokeWidth={3} /> : <AlertCircle size={14} strokeWidth={3} />}
                 {isHealthy ? t("resultHealthyBadge") : t("resultDiseaseBadge")}
-              </span>
+              </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <InfoRow label={t("cropType")} value={prediction.crop} />
               <InfoRow
                 label={t("condition")}
@@ -153,37 +172,35 @@ export default function ResultCard({
         </div>
 
         {geo?.coords && (
-          <p style={{ fontSize: 11, color: "var(--green-400)", marginTop: 10 }}>
+          <p style={{ fontSize: 11, color: "var(--emerald-400)", marginTop: 16, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+            <Dna size={12} />
             {t("geoLatLon", { lat: geo.coords.lat.toFixed(2), lon: geo.coords.lon.toFixed(2) })} — {t("geoStatusUsed")}{" "}
             ({geo.source === "manual" ? t("geoSourceManual") : t("geoSourceGps")})
           </p>
         )}
-        {geo?.failed && !geo.coords && (
-          <p style={{ fontSize: 11, color: "var(--warning)", marginTop: 10 }}>{t("geoStatusDenied")}</p>
-        )}
 
-        <div style={{ marginTop: 16 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{t("confidenceLabel")}</span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--green-400)" }}>
+        <div style={{ marginTop: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{t("confidenceLabel")}</span>
+            <span style={{ fontSize: 13, fontWeight: 800, color: "var(--emerald-400)" }}>
               {confidencePercent}%
             </span>
           </div>
-          <div className="confidence-track">
+          <div className="confidence-track" style={{ height: 8 }}>
             <div className="confidence-fill" style={{ width: `${confidencePercent}%` }} />
           </div>
         </div>
 
         {!isHealthy && (
-          <div style={{ marginTop: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <div className="feature-pill" style={{ fontSize: 12 }}>
-              <span
-                style={{ width: 8, height: 8, borderRadius: "50%", background: severityColor, display: "inline-block" }}
+          <div style={{ marginTop: 18, display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div className="feature-pill" style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>
+              <div
+                style={{ width: 8, height: 8, borderRadius: "50%", background: severityColor }}
               />
-              {t("matchLabel")}: <strong style={{ color: severityColor }}>{severityLabel}</strong>
+              {t("matchLabel")}: <span style={{ color: severityColor }}>{severityLabel}</span>
             </div>
-            <div className="feature-pill" style={{ fontSize: 12 }}>
-              {t("pipelineBadge")}
+            <div className="feature-pill" style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>
+              <ActivityIcon /> {t("pipelineBadge")}
             </div>
           </div>
         )}
@@ -193,29 +210,35 @@ export default function ResultCard({
         <div
           className="glass-card animate-fade-in-up"
           style={{
-            padding: 20,
-            borderColor: "rgba(250, 204, 21, 0.3)",
-            background: "rgba(250, 204, 21, 0.04)",
+            padding: 24,
+            borderLeft: "4px solid var(--warning)",
+            background: "rgba(245, 158, 11, 0.04)",
           }}
         >
-          <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--warning)", marginBottom: 8 }}>
-            📈 {t("yieldUpliftTitle")}
-          </h3>
-          <p style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 12, lineHeight: 1.5 }}>
-            {t("yieldUpliftHint")}
-          </p>
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.75, margin: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+            <TrendingUp size={20} className="text-warning" />
+            <h3 style={{ fontSize: 16, fontWeight: 800, color: "var(--warning)", letterSpacing: "-0.01em" }}>
+              {t("yieldUpliftTitle")}
+            </h3>
+          </div>
+          <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.7, margin: 0, fontWeight: 500 }}>
             {yU}
+          </p>
+          <p style={{ fontSize: 11, color: "var(--text-dim)", marginTop: 12, fontWeight: 600 }}>
+            {t("yieldUpliftHint")}
           </p>
         </div>
       )}
 
       {hasField && fc && (
-        <div className="glass-card" style={{ padding: 20 }}>
-          <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>
-            {t("fieldTitle")}
-          </h3>
-          <p style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 12 }}>{t("fieldHint")}</p>
+        <div className="glass-card" style={{ padding: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+            <Thermometer size={18} className="text-emerald-400" />
+            <h3 style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)" }}>
+              {t("fieldTitle")}
+            </h3>
+          </div>
+          <p style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 16, fontWeight: 600 }}>{t("fieldHint")}</p>
           <FieldGrid conditions={fc} t={t} />
         </div>
       )}
@@ -223,19 +246,22 @@ export default function ResultCard({
       {recommendation && showAirSection && (
         <div
           className="glass-card"
-          style={{ padding: 20, borderColor: "rgba(96, 165, 250, 0.22)" }}
+          style={{ padding: 24, borderLeft: "4px solid #60a5fa", background: "rgba(96, 165, 250, 0.04)" }}
         >
-          <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>
-            {t("airTitle")}
-          </h3>
-          <p style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 12 }}>{t("airHint")}</p>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+            <Wind size={18} className="text-blue-400" />
+            <h3 style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)" }}>
+              {t("airTitle")}
+            </h3>
+          </div>
+          <p style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 16, fontWeight: 600 }}>{t("airHint")}</p>
           {hasAirMetrics(aq) && <AirQualityGrid aq={aq!} t={t} />}
           {nonEmpty(yA) && (
-            <div style={{ marginTop: hasAirMetrics(aq) ? 14 : 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--green-400)", marginBottom: 8 }}>
+            <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: "var(--emerald-400)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 {t("airAdviceTitle")}
               </div>
-              <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7, margin: 0 }}>
+              <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.7, margin: 0, fontWeight: 500 }}>
                 {yA}
               </p>
             </div>
@@ -244,19 +270,19 @@ export default function ResultCard({
       )}
 
       {recommendation && !isHealthy && (
-        <div className="glass-card" style={{ padding: 20 }}>
-          <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", marginBottom: 14 }}>
+        <div className="glass-card" style={{ padding: 24 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)", marginBottom: 16, letterSpacing: "-0.01em" }}>
             {t("diseaseMgmt")}
           </h3>
 
           <div
             style={{
               display: "flex",
-              gap: 6,
-              marginBottom: 18,
-              background: "rgba(255,255,255,0.03)",
-              padding: 4,
-              borderRadius: 12,
+              gap: 8,
+              marginBottom: 20,
+              background: "rgba(0,0,0,0.2)",
+              padding: 6,
+              borderRadius: 16,
             }}
           >
             {(["treatment", "prevention", "fertilizer"] as const).map((tab) => (
@@ -267,15 +293,16 @@ export default function ResultCard({
                 onClick={() => setActiveTab(tab)}
                 style={{
                   flex: 1,
-                  padding: "8px 10px",
-                  borderRadius: 8,
+                  padding: "10px 12px",
+                  borderRadius: 12,
                   fontSize: 12,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   border: "none",
                   cursor: "pointer",
-                  transition: "all 0.2s",
-                  background: activeTab === tab ? "var(--green-600)" : "transparent",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  background: activeTab === tab ? "var(--emerald-600)" : "transparent",
                   color: activeTab === tab ? "#fff" : "var(--text-muted)",
+                  boxShadow: activeTab === tab ? "0 4px 12px rgba(16, 185, 129, 0.25)" : "none"
                 }}
               >
                 {tab === "treatment" ? t("tabTreatment") : tab === "prevention" ? t("tabPrevention") : t("tabFertilizer")}
@@ -287,13 +314,14 @@ export default function ResultCard({
             className="animate-fade-in"
             key={activeTab}
             style={{
-              background: "rgba(255,255,255,0.02)",
+              background: "rgba(16, 185, 129, 0.03)",
               border: "1px solid var(--border)",
-              borderRadius: 14,
-              padding: 16,
-              fontSize: 13,
+              borderRadius: 20,
+              padding: 20,
+              fontSize: 14,
               color: "var(--text-secondary)",
-              lineHeight: 1.7,
+              lineHeight: 1.8,
+              fontWeight: 500
             }}
           >
             {activeTab === "treatment" && recommendation.treatment}
@@ -302,23 +330,26 @@ export default function ResultCard({
           </div>
 
           {recommendation.confidence_note && (
-            <p style={{ marginTop: 10, fontSize: 11, color: "var(--text-dim)", fontStyle: "italic", lineHeight: 1.5 }}>
-              ℹ️ {recommendation.confidence_note}
-            </p>
+            <div style={{ marginTop: 16, padding: "12px 16px", borderRadius: 12, background: "rgba(255,255,255,0.02)", display: "flex", gap: 10 }}>
+              <Info size={14} className="text-emerald-400 mt-0.5" />
+              <p style={{ fontSize: 11, color: "var(--text-dim)", fontWeight: 500, lineHeight: 1.5, margin: 0 }}>
+                {recommendation.confidence_note}
+              </p>
+            </div>
           )}
         </div>
       )}
 
       {recommendation && hasYieldPlan && (
-        <div className="glass-card" style={{ padding: 20, borderColor: "rgba(74,222,128,0.2)" }}>
-          <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--green-400)", marginBottom: 10 }}>
+        <div className="glass-card" style={{ padding: 24, borderLeft: "4px solid var(--emerald-500)" }}>
+          <h3 style={{ fontSize: 17, fontWeight: 800, color: "var(--emerald-400)", marginBottom: 6, letterSpacing: "-0.01em" }}>
             {t("yieldTitle")}
           </h3>
-          <p style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 14 }}>{t("yieldHint")}</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {nonEmpty(yI) && <YieldBlock icon="💧" title={t("yieldWater")} text={yI!} />}
-            {nonEmpty(yS) && <YieldBlock icon="🌍" title={t("yieldSoil")} text={yS!} />}
-            {nonEmpty(yC) && <YieldBlock icon="🌾" title={t("yieldCrop")} text={yC!} />}
+          <p style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 20, fontWeight: 600 }}>{t("yieldHint")}</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {nonEmpty(yI) && <YieldBlock icon={<Waves size={18} />} title={t("yieldWater")} text={yI!} />}
+            {nonEmpty(yS) && <YieldBlock icon={<Sun size={18} />} title={t("yieldSoil")} text={yS!} />}
+            {nonEmpty(yC) && <YieldBlock icon={<Sprout size={18} />} title={t("yieldCrop")} text={yC!} />}
           </div>
         </div>
       )}
@@ -327,28 +358,32 @@ export default function ResultCard({
         <div
           className="glass-card animate-fade-in-up delay-100"
           style={{
-            padding: 24,
+            padding: 32,
             textAlign: "center",
-            borderColor: "rgba(74,222,128,0.25)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
           }}
         >
-          <div style={{ fontSize: 48, marginBottom: 10 }}>🎉</div>
-          <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--green-400)", marginBottom: 6 }}>
+          <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--success-bg)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--emerald-400)", marginBottom: 16 }}>
+            <CheckCircle size={32} strokeWidth={3} />
+          </div>
+          <h3 style={{ fontSize: 18, fontWeight: 800, color: "var(--emerald-400)", marginBottom: 8 }}>
             {t("healthyCardTitle")}
           </h3>
-          <p style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6 }}>
+          <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.7, maxWidth: 300 }}>
             {t("healthyCardDesc")}
           </p>
         </div>
       )}
 
-      <div className="result-actions">
-        <button id="btn-scan-another" type="button" onClick={onReset} className="btn-primary" style={{ flex: 2 }}>
-          <ScanIcon />
+      <div className="result-actions" style={{ gap: 12 }}>
+        <button id="btn-scan-another" type="button" onClick={onReset} className="btn-primary" style={{ flex: 2, height: 56 }}>
+          <RotateCcw size={20} />
           {t("scanAnother")}
         </button>
-        <button id="btn-copy-report" type="button" onClick={handleCopyReport} className="btn-ghost" style={{ flex: 1 }}>
-          {copied ? t("copied") : <><CopyIcon /> {t("copyReport")}</>}
+        <button id="btn-copy-report" type="button" onClick={handleCopyReport} className="btn-ghost" style={{ flex: 1, height: 56 }}>
+          {copied ? <><CheckCircle size={18} /> {t("copied")}</> : <><Share2 size={18} /> {t("copyReport")}</>}
         </button>
       </div>
     </div>
@@ -381,11 +416,11 @@ function AirQualityGrid({
   if (rows.length === 0) return null;
 
   return (
-    <dl style={{ display: "grid", gap: 8, fontSize: 12 }}>
+    <dl style={{ display: "grid", gap: 10, fontSize: 13 }}>
       {rows.map((r) => (
         <div key={r.label} style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-          <dt style={{ color: "var(--text-muted)" }}>{r.label}</dt>
-          <dd style={{ fontWeight: 600, textAlign: "right" }}>{r.value}</dd>
+          <dt style={{ color: "var(--text-muted)", fontWeight: 500 }}>{r.label}</dt>
+          <dd style={{ fontWeight: 700, textAlign: "right", color: "var(--text-primary)" }}>{r.value}</dd>
         </div>
       ))}
     </dl>
@@ -399,51 +434,42 @@ function FieldGrid({
   conditions: FieldConditions;
   t: (key: MessageKey) => string;
 }) {
-  const rows: { label: string; value: string }[] = [];
+  const rows: { label: string; value: string; icon: React.ReactNode }[] = [];
   if (conditions.temperature_c != null) {
-    rows.push({ label: t("airTemp"), value: `${conditions.temperature_c.toFixed(1)} °C` });
+    rows.push({ label: t("airTemp"), value: `${conditions.temperature_c.toFixed(1)} °C`, icon: <Thermometer size={14} /> });
   }
   if (conditions.relative_humidity_pct != null) {
-    rows.push({ label: t("humidity"), value: `${Math.round(conditions.relative_humidity_pct)}%` });
-  }
-  if (conditions.precipitation_mm != null) {
-    rows.push({ label: t("precipitation"), value: `${conditions.precipitation_mm.toFixed(1)} mm` });
-  }
-  if (conditions.wind_speed_kmh != null) {
-    rows.push({ label: t("wind"), value: `${conditions.wind_speed_kmh.toFixed(1)} km/h` });
+    rows.push({ label: t("humidity"), value: `${Math.round(conditions.relative_humidity_pct)}%`, icon: <Waves size={14} /> });
   }
   if (conditions.soil_moisture_0_7cm != null) {
-    rows.push({ label: t("soilMoist07"), value: `${conditions.soil_moisture_0_7cm.toFixed(3)} m³/m³` });
+    rows.push({ label: t("soilMoist07"), value: `${conditions.soil_moisture_0_7cm.toFixed(3)} m³/m³`, icon: <Droplets size={14} /> });
   }
-  if (conditions.soil_moisture_7_28cm != null) {
-    rows.push({ label: t("soilMoist728"), value: `${conditions.soil_moisture_7_28cm.toFixed(3)} m³/m³` });
-  }
-  if (conditions.soil_temperature_0_7cm_c != null) {
-    rows.push({ label: t("soilTemp"), value: `${conditions.soil_temperature_0_7cm_c.toFixed(1)} °C` });
-  }
-  if (conditions.time_utc) {
-    rows.push({ label: t("timeUtc"), value: conditions.time_utc });
-  }
+  
+  if (rows.length === 0) return null;
 
   return (
-    <dl style={{ display: "grid", gap: 8, fontSize: 12 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
       {rows.map((r) => (
-        <div key={r.label} style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-          <dt style={{ color: "var(--text-muted)" }}>{r.label}</dt>
-          <dd style={{ fontWeight: 600, textAlign: "right" }}>{r.value}</dd>
+        <div key={r.label} style={{ background: "rgba(255,255,255,0.02)", padding: 12, borderRadius: 12, border: "1px solid var(--border)" }}>
+           <div style={{ color: "var(--text-muted)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
+            {r.icon} {r.label}
+          </div>
+          <div style={{ color: "var(--text-primary)", fontSize: 13, fontWeight: 700 }}>
+            {r.value}
+          </div>
         </div>
       ))}
-    </dl>
+    </div>
   );
 }
 
-function YieldBlock({ icon, title, text }: { icon: string; title: string; text: string }) {
+function YieldBlock({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
   return (
     <div>
-      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
-        {icon} {title}
+      <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 8, display: "flex", alignItems: "center", gap: 8, color: "var(--emerald-500)" }}>
+        {icon} <span style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}>{title}</span>
       </div>
-      <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.65, margin: 0 }}>
+      <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.7, margin: 0, fontWeight: 500 }}>
         {text}
       </p>
     </div>
@@ -461,12 +487,12 @@ function InfoRow({
 }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-      <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{label}</span>
+      <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>{label}</span>
       <span
         style={{
-          fontSize: 13,
-          fontWeight: 600,
-          color: highlight ? "var(--danger)" : "var(--text-primary)",
+          fontSize: 14,
+          fontWeight: 700,
+          color: highlight ? "var(--danger)" : "var(--emerald-400)",
           maxWidth: "60%",
           textAlign: "right",
           overflow: "hidden",
@@ -480,19 +506,6 @@ function InfoRow({
   );
 }
 
-function ScanIcon() {
-  return (
-    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ display: "inline", marginRight: 6 }}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 4h4M4 20h4M16 4h4M16 20h4M4 4v4M4 20v-4M20 4v4M20 20v-4M9 12h6" />
-    </svg>
-  );
-}
-
-function CopyIcon() {
-  return (
-    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ display: "inline", marginRight: 6 }}>
-      <rect x="9" y="9" width="13" height="13" rx="2" strokeLinecap="round" strokeLinejoin="round" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-    </svg>
-  );
+function ActivityIcon() {
+  return <Activity size={12} strokeWidth={3} />;
 }

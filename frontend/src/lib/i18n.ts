@@ -39,7 +39,7 @@ const messagesEn = {
   navDiseases: "Crops",
   badgeOnline: "AI Online",
 
-  heroBadge: "✨ Help for every farmer",
+  heroBadge: "Help for every farmer",
   heroTitle: "Check your crop",
   heroTitleHighlight: "in minutes",
   heroSubtitle:
@@ -84,7 +84,7 @@ const messagesEn = {
   coordsIncomplete: "Enter both latitude and longitude, or leave both empty to skip weather/air.",
   coordsInvalid: "Latitude must be between −90 and 90, longitude between −180 and 180.",
 
-  footerLeft: "🌿 Dr. Crop v0.1 — Vision + Exa RAG",
+  footerLeft: "Dr. Crop v0.1 — Vision + Exa RAG",
   footerRight: "Next.js · FastAPI · Open-Meteo",
 
   uploadLiveCamera: "Live camera",
@@ -97,8 +97,8 @@ const messagesEn = {
   uploadAnalyzing: "Vision + RAG analysis…",
 
   resultTitle: "Diagnosis Result",
-  resultHealthyBadge: "✓ Healthy",
-  resultDiseaseBadge: "⚠ Disease Found",
+  resultHealthyBadge: "Healthy",
+  resultDiseaseBadge: "Disease Found",
   cropType: "Crop Type",
   condition: "Condition",
   noDisease: "No disease detected",
@@ -107,7 +107,7 @@ const messagesEn = {
   severityHigh: "High",
   severityMedium: "Medium",
   severityLow: "Low",
-  pipelineBadge: "👁️ Vision + 🔎 Exa RAG",
+  pipelineBadge: "Vision + Exa RAG",
 
   fieldTitle: "Field weather & soil (estimate)",
   fieldHint: "Open-Meteo for your location — use with local soil tests for decisions.",
@@ -135,9 +135,9 @@ const messagesEn = {
   timeUtc: "Time (UTC)",
 
   diseaseMgmt: "Disease management",
-  tabTreatment: "💊 Treatment",
-  tabPrevention: "🛡️ Prevention",
-  tabFertilizer: "🌱 Fertilizer",
+  tabTreatment: "Treatment",
+  tabPrevention: "Prevention",
+  tabFertilizer: "Fertilizer",
 
   yieldTitle: "Maximum yield plan",
   yieldHint: "Irrigation, soil health, and crop practices for yield under current conditions.",
@@ -153,14 +153,14 @@ const messagesEn = {
 
   scanAnother: "Scan another crop",
   copyReport: "Copy Report",
-  copied: "✓ Copied!",
+  copied: "Copied!",
 
   errCameraApi: "Camera API not available. Use gallery or quick capture.",
   errCameraPermission: "Could not access the camera. Check permissions or use upload.",
   cameraOverlayHelp:
     "Fill the screen with your crop in good light. The check runs on our server — your data is used only for advice.",
 
-  copilotTitle: "Farm copilot — quick advice",
+  copilotTitle: "Farm copilot",
   copilotSubtitle:
     "Ask anything about farming: water, fertilizer, pests, soil, weather. Replies follow your language (English / हिन्दी / اردو) above. Short, clear words — like talking to a friend.",
   copilotPlaceholder: "e.g. When should I water wheat after rain? How to reduce insects without too much spray?",
@@ -190,7 +190,7 @@ const messagesHi: Record<MessageKey, string> = {
   navDiseases: "फसलें",
   badgeOnline: "एआई ऑनलाइन",
 
-  heroBadge: "✨ हर किसान के लिए मदद",
+  heroBadge: "हर किसान के लिए मदद",
   heroTitle: "अपनी फसल की जाँच करें",
   heroTitleHighlight: "कुछ ही मिनट में",
   heroSubtitle:
@@ -235,7 +235,7 @@ const messagesHi: Record<MessageKey, string> = {
   coordsIncomplete: "दोनों अक्षांश और देशांतर भरें, या मौसम/वायु छोड़ने के लिए दोनों खाली छोड़ें।",
   coordsInvalid: "अक्षांश −90 से 90 और देशांतर −180 से 180 के बीच होना चाहिए।",
 
-  footerLeft: "🌿 डॉ. क्रॉप v0.1 — विज़न + Exa RAG",
+  footerLeft: "डॉ. क्रॉप v0.1 — विज़न + Exa RAG",
   footerRight: "Next.js · FastAPI · Open-Meteo",
 
   uploadLiveCamera: "लाइव कैमरा",
@@ -248,8 +248,8 @@ const messagesHi: Record<MessageKey, string> = {
   uploadAnalyzing: "विज़न + RAG विश्लेषण…",
 
   resultTitle: "निदान परिणाम",
-  resultHealthyBadge: "✓ स्वस्थ",
-  resultDiseaseBadge: "⚠ रोग मिला",
+  resultHealthyBadge: "स्वस्थ",
+  resultDiseaseBadge: "रोग मिला",
   cropType: "फसल प्रकार",
   condition: "स्थिति",
   noDisease: "कोई रोग नहीं",
@@ -258,7 +258,7 @@ const messagesHi: Record<MessageKey, string> = {
   severityHigh: "उच्च",
   severityMedium: "मध्यम",
   severityLow: "कम",
-  pipelineBadge: "👁️ विज़न + 🔎 Exa RAG",
+  pipelineBadge: "विज़न + Exa RAG",
 
   fieldTitle: "खेत का मौसम और मिट्टी (अनुमान)",
   fieldHint: "आपके स्थान के लिए Open-Meteo — निर्णय के लिए स्थानीय मिट्टी परीक्षण के साथ।",
@@ -287,9 +287,9 @@ const messagesHi: Record<MessageKey, string> = {
   timeUtc: "समय (UTC)",
 
   diseaseMgmt: "रोग प्रबंधन",
-  tabTreatment: "💊 उपचार",
-  tabPrevention: "🛡️ रोकथाम",
-  tabFertilizer: "🌱 उर्वरक",
+  tabTreatment: "उपचार",
+  tabPrevention: "रोकथाम",
+  tabFertilizer: "उर्वरक",
 
   yieldTitle: "अधिकतम उपज योजना",
   yieldHint: "वर्तमान स्थितियों में सिंचाई, मिट्टी और उपज के लिए प्रथाएँ।",
@@ -305,7 +305,7 @@ const messagesHi: Record<MessageKey, string> = {
 
   scanAnother: "दूसरी फसल स्कैन करें",
   copyReport: "रिपोर्ट कॉपी करें",
-  copied: "✓ कॉपी!",
+  copied: "कॉपी!",
 
   errCameraApi: "कैमरा API उपलब्ध नहीं। गैलरी या त्वरित कैप्चर का उपयोग करें।",
   errCameraPermission: "कैमरा एक्सेस नहीं हो सका। अनुमति जाँचें या अपलोड करें।",
@@ -342,7 +342,7 @@ const messagesUr: Record<MessageKey, string> = {
   navDiseases: "فصلیں",
   badgeOnline: "اے آئی آن لائن",
 
-  heroBadge: "✨ ہر کسان کے لیے مدد",
+  heroBadge: "ہر کسان کے لیے مدد",
   heroTitle: "اپنی فصل کی جانچ کریں",
   heroTitleHighlight: "چند منٹ میں",
   heroSubtitle:
@@ -387,7 +387,7 @@ const messagesUr: Record<MessageKey, string> = {
   coordsIncomplete: "عرض اور طول دونیں بھریں، یا موسم/ہوا چھوڑنے کے لیے دونوں خالی چھوڑیں۔",
   coordsInvalid: "عرض −90 سے 90 اور طول −180 سے 180 کے درمیان ہونا چاہیے۔",
 
-  footerLeft: "🌿 ڈاکٹر کراپ v0.1 — ویژن + Exa RAG",
+  footerLeft: "ڈاکٹر کراپ v0.1 — ویژن + Exa RAG",
   footerRight: "Next.js · FastAPI · Open-Meteo",
 
   uploadLiveCamera: "لائیو کیمرہ",
@@ -400,8 +400,8 @@ const messagesUr: Record<MessageKey, string> = {
   uploadAnalyzing: "ویژن + RAG تجزیہ…",
 
   resultTitle: "تشخیص کا نتیجہ",
-  resultHealthyBadge: "✓ صحت مند",
-  resultDiseaseBadge: "⚠ بیماری ملی",
+  resultHealthyBadge: "صحت مند",
+  resultDiseaseBadge: "بیماری ملی",
   cropType: "فصل کی قسم",
   condition: "حالت",
   noDisease: "کوئی بیماری نہیں",
@@ -410,7 +410,7 @@ const messagesUr: Record<MessageKey, string> = {
   severityHigh: "زیادہ",
   severityMedium: "درمیانی",
   severityLow: "کم",
-  pipelineBadge: "👁️ ویژن + 🔎 Exa RAG",
+  pipelineBadge: "ویژن + Exa RAG",
 
   fieldTitle: "کھیت کا موسم اور مٹی (تخمینہ)",
   fieldHint: "آپ کے مقام کے لیے Open-Meteo — فیصلوں کے لیے مقامی مٹی کے ٹیسٹ کے ساتھ۔",
@@ -439,9 +439,9 @@ const messagesUr: Record<MessageKey, string> = {
   timeUtc: "وقت (UTC)",
 
   diseaseMgmt: "بیماری کا انتظام",
-  tabTreatment: "💊 علاج",
-  tabPrevention: "🛡️ روک تھام",
-  tabFertilizer: "🌱 کھاد",
+  tabTreatment: "علاج",
+  tabPrevention: "روکتھام",
+  tabFertilizer: "کھاد",
 
   yieldTitle: "زیادہ سے زیادہ پیداوار کا منصوبہ",
   yieldHint: "موجودہ حالات میں آبپاشی، مٹی اور پیداوار کے طریقے۔",
@@ -457,7 +457,7 @@ const messagesUr: Record<MessageKey, string> = {
 
   scanAnother: "دوسری فصل اسکین کریں",
   copyReport: "رپورٹ کاپی",
-  copied: "✓ کاپی!",
+  copied: "کاپی!",
 
   errCameraApi: "کیمرہ API دستیاب نہیں۔ گیلری یا فوری کیپچر استعمال کریں۔",
   errCameraPermission: "کیمرہ تک رسائی نہیں ہو سکی۔ اجازت چیک کریں یا اپ لوڈ کریں۔",

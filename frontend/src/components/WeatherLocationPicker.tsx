@@ -1,6 +1,7 @@
 "use client";
 
 import { useLocale } from "@/contexts/LocaleContext";
+import { CloudSun, MapPin, Navigation } from "lucide-react";
 
 export type WeatherLocMode = "gps" | "manual";
 
@@ -29,25 +30,30 @@ export default function WeatherLocationPicker({
     <div
       className="glass-card"
       style={{
-        padding: 16,
+        padding: 20,
         marginBottom: 16,
-        borderColor: "rgba(74, 222, 128, 0.2)",
+        borderLeft: "4px solid var(--emerald-400)",
       }}
     >
-      <div style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)", marginBottom: 6 }}>
-        🌦️ {t("weatherLocTitle")}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+        <CloudSun size={18} className="text-emerald-400" />
+        <div style={{ fontWeight: 800, fontSize: 15, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
+          {t("weatherLocTitle")}
+        </div>
       </div>
-      <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5, marginBottom: 12 }}>
+      <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 16, fontWeight: 500 }}>
         {t("weatherLocHint")}
       </p>
 
-      <div className="locale-segment" style={{ marginBottom: 12, width: "100%", maxWidth: 360 }}>
+      <div className="locale-segment" style={{ marginBottom: 16, width: "100%", maxWidth: 1000, background: "rgba(0,0,0,0.2)", padding: 4, borderRadius: 14 }}>
         <button
           type="button"
           aria-current={mode === "gps" ? "true" : undefined}
           disabled={disabled}
           onClick={() => onModeChange("gps")}
+          style={{ flex: 1, borderRadius: 10, fontSize: 12, fontWeight: 700, gap: 8 }}
         >
+          <Navigation size={14} />
           {t("weatherLocGps")}
         </button>
         <button
@@ -55,15 +61,17 @@ export default function WeatherLocationPicker({
           aria-current={mode === "manual" ? "true" : undefined}
           disabled={disabled}
           onClick={() => onModeChange("manual")}
+          style={{ flex: 1, borderRadius: 10, fontSize: 12, fontWeight: 700, gap: 8 }}
         >
+          <MapPin size={14} />
           {t("weatherLocManual")}
         </button>
       </div>
 
       {mode === "manual" && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "flex-end" }}>
-          <label style={{ flex: "1 1 120px", display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: 11, color: "var(--text-dim)" }}>{t("weatherLat")}</span>
+        <div className="animate-fade-in" style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "flex-end" }}>
+          <label style={{ flex: "1 1 140px", display: "flex", flexDirection: "column", gap: 6 }}>
+            <span style={{ fontSize: 10, fontWeight: 800, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{t("weatherLat")}</span>
             <input
               type="text"
               inputMode="decimal"
@@ -72,18 +80,19 @@ export default function WeatherLocationPicker({
               value={manualLat}
               onChange={(e) => onManualLat(e.target.value)}
               style={{
-                padding: "10px 12px",
+                padding: "12px 14px",
                 borderRadius: 12,
-                border: "1px solid var(--border-bright)",
-                background: "rgba(255,255,255,0.04)",
+                border: "1px solid var(--border)",
+                background: "rgba(0,0,0,0.2)",
                 color: "var(--text-primary)",
                 fontSize: 14,
                 width: "100%",
+                fontWeight: 600
               }}
             />
           </label>
-          <label style={{ flex: "1 1 120px", display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: 11, color: "var(--text-dim)" }}>{t("weatherLon")}</span>
+          <label style={{ flex: "1 1 140px", display: "flex", flexDirection: "column", gap: 6 }}>
+            <span style={{ fontSize: 10, fontWeight: 800, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{t("weatherLon")}</span>
             <input
               type="text"
               inputMode="decimal"
@@ -92,13 +101,14 @@ export default function WeatherLocationPicker({
               placeholder="e.g. 77.21"
               onChange={(e) => onManualLon(e.target.value)}
               style={{
-                padding: "10px 12px",
+                padding: "12px 14px",
                 borderRadius: 12,
-                border: "1px solid var(--border-bright)",
-                background: "rgba(255,255,255,0.04)",
+                border: "1px solid var(--border)",
+                background: "rgba(0,0,0,0.2)",
                 color: "var(--text-primary)",
                 fontSize: 14,
                 width: "100%",
+                fontWeight: 600
               }}
             />
           </label>

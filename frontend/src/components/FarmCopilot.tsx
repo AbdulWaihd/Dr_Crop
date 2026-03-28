@@ -5,6 +5,15 @@ import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { speechLangChainFor } from "@/lib/i18n";
 import { askFarmCopilot } from "@/services/api";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { 
+  MessageSquare, 
+  Mic, 
+  MicOff, 
+  Send, 
+  Loader2, 
+  Sparkles,
+  AlertCircle
+} from "lucide-react";
 
 export default function FarmCopilot() {
   const { t, locale, isRtl } = useLocale();
@@ -77,13 +86,16 @@ export default function FarmCopilot() {
     <section
       id="farm-copilot"
       className="glass-card animate-fade-in-up delay-100"
-      style={{ padding: 20, marginBottom: 20, borderColor: "rgba(74, 222, 128, 0.25)" }}
+      style={{ padding: 24, marginBottom: 20, borderLeft: "4px solid var(--emerald-500)" }}
     >
-      <div style={{ marginBottom: 12 }}>
-        <h2 style={{ fontSize: 17, fontWeight: 800, color: "var(--text-primary)", marginBottom: 6 }}>
-          💬 {t("copilotTitle")}
-        </h2>
-        <p style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6, margin: 0 }}>
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+          <MessageSquare size={20} className="text-emerald-400" />
+          <h2 style={{ fontSize: 18, fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
+            {t("copilotTitle")}
+          </h2>
+        </div>
+        <p style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6, margin: 0, fontWeight: 500 }}>
           {t("copilotSubtitle")}
         </p>
       </div>
@@ -91,9 +103,9 @@ export default function FarmCopilot() {
       <div
         style={{
           display: "flex",
-          gap: 10,
+          gap: 12,
           alignItems: "stretch",
-          marginBottom: 6,
+          marginBottom: 10,
           flexDirection: isRtl ? "row-reverse" : "row",
         }}
       >
@@ -107,17 +119,19 @@ export default function FarmCopilot() {
           placeholder={t("copilotPlaceholder")}
           rows={3}
           disabled={loading}
+          className="copilot-textarea"
           style={{
             flex: 1,
-            resize: "vertical",
-            minHeight: 88,
-            padding: 12,
-            borderRadius: 14,
-            border: "1px solid var(--border-bright)",
-            background: "rgba(255,255,255,0.04)",
+            resize: "none",
+            minHeight: 100,
+            padding: 16,
+            borderRadius: 16,
+            border: "1px solid var(--border)",
+            background: "rgba(0,0,0,0.2)",
             color: "var(--text-primary)",
             fontSize: 14,
-            lineHeight: 1.5,
+            lineHeight: 1.6,
+            fontWeight: 500
           }}
         />
         <button
@@ -128,30 +142,34 @@ export default function FarmCopilot() {
           className={listening ? "btn-secondary" : "btn-ghost"}
           style={{
             flexShrink: 0,
-            width: 52,
-            minHeight: 88,
-            borderRadius: 14,
+            width: 64,
+            borderRadius: 16,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 4,
-            borderColor: listening ? "rgba(248,113,113,0.45)" : undefined,
-            opacity: !supported ? 0.45 : 1,
+            gap: 6,
+            border: listening ? "1px solid rgba(248,113,113,0.3)" : "1px solid var(--border)",
+            background: listening ? "rgba(248,113,113,0.05)" : "rgba(255,255,255,0.02)",
+            opacity: !supported ? 0.3 : 1,
+            transition: "all 0.2s"
           }}
           aria-pressed={listening}
         >
-          <MicIcon active={listening} />
-          <span style={{ fontSize: 10, fontWeight: 600, color: "var(--text-muted)" }}>
+          {listening ? <MicOff size={20} className="text-danger" /> : <Mic size={20} className="text-emerald-400" />}
+          <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: listening ? "var(--danger)" : "var(--text-dim)" }}>
             {listening ? t("copilotVoiceStop") : t("copilotVoiceStart")}
           </span>
         </button>
       </div>
 
       {listening && (
-        <p style={{ fontSize: 12, color: "var(--green-400)", marginBottom: interim ? 4 : 10, marginTop: 0 }}>
-          ● {t("copilotVoiceListening")}
-        </p>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: interim ? 6 : 12 }}>
+          <div className="pulse-dot" style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--emerald-400)" }} />
+          <p style={{ fontSize: 12, color: "var(--emerald-400)", fontWeight: 700, margin: 0 }}>
+            {t("copilotVoiceListening")}
+          </p>
+        </div>
       )}
       {listening && interim.trim() ? (
         <p
@@ -160,55 +178,68 @@ export default function FarmCopilot() {
             fontSize: 13,
             color: "var(--text-dim)",
             fontStyle: "italic",
-            marginBottom: 10,
+            marginBottom: 12,
             marginTop: 0,
-            lineHeight: 1.45,
+            lineHeight: 1.5,
+            padding: "0 10px",
+            borderLeft: "2px solid rgba(255,255,255,0.1)"
           }}
         >
-          {interim}
+          "{interim}"
         </p>
       ) : null}
 
       {voiceErrorLabel && (
-        <p style={{ fontSize: 12, color: "var(--warning)", marginBottom: 10, lineHeight: 1.45 }}>
-          {voiceErrorLabel}
-        </p>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, color: "var(--warning)" }}>
+          <AlertCircle size={14} />
+          <p style={{ fontSize: 12, fontWeight: 600, margin: 0 }}>{voiceErrorLabel}</p>
+        </div>
       )}
 
       <button
         type="button"
         className="btn-primary"
-        style={{ maxWidth: 220 }}
+        style={{ height: 48, padding: "0 28px", borderRadius: 12, gap: 10 }}
         disabled={loading || !q.trim()}
         onClick={submit}
       >
+        {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
         {loading ? t("copilotThinking") : t("copilotSend")}
       </button>
 
       {error && (
-        <p style={{ marginTop: 14, fontSize: 13, color: "var(--danger)", lineHeight: 1.5 }}>{error}</p>
+        <div style={{ marginTop: 16, padding: "12px 16px", borderRadius: 12, background: "rgba(248,113,113,0.05)", border: "1px solid rgba(248,113,113,0.2)", display: "flex", gap: 10, color: "var(--danger)" }}>
+          <AlertCircle size={16} />
+          <p style={{ fontSize: 13, fontWeight: 500, margin: 0, lineHeight: 1.5 }}>{error}</p>
+        </div>
       )}
 
       {answer && (
         <div
+          className="animate-fade-in"
           style={{
-            marginTop: 16,
-            padding: 14,
-            borderRadius: 14,
-            background: "rgba(255,255,255,0.03)",
+            marginTop: 20,
+            padding: 20,
+            borderRadius: 20,
+            background: "rgba(16, 185, 129, 0.03)",
             border: "1px solid var(--border)",
+            boxShadow: "inset 0 2px 10px rgba(0,0,0,0.2)"
           }}
         >
-          <p style={{ fontSize: 12, fontWeight: 700, color: "var(--green-400)", marginBottom: 8 }}>
-            {t("headerTitle")}
-          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+            <Sparkles size={16} className="text-emerald-400" />
+            <p style={{ fontSize: 12, fontWeight: 800, color: "var(--emerald-400)", margin: 0, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              Expert Recommendation
+            </p>
+          </div>
           <div
             dir={isRtl ? "rtl" : "ltr"}
             style={{
               fontSize: 14,
               color: "var(--text-secondary)",
-              lineHeight: 1.75,
+              lineHeight: 1.8,
               whiteSpace: "pre-wrap",
+              fontWeight: 500
             }}
           >
             {answer}
@@ -216,16 +247,5 @@ export default function FarmCopilot() {
         </div>
       )}
     </section>
-  );
-}
-
-function MicIcon({ active }: { active: boolean }) {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        fill={active ? "var(--danger)" : "currentColor"}
-        d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"
-      />
-    </svg>
   );
 }
