@@ -1,7 +1,7 @@
 {
   "name": "Dr. Crop — Crop Disease Detection",
   "short_name": "Dr. Crop",
-  "description": "AI-powered crop disease detection from leaf photos",
+  "description": "Crop health checks and farming advice for every farmer — English, Hindi, Urdu",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8faf5",

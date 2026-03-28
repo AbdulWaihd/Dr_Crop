@@ -1,69 +1,109 @@
 "use client";
 
 import { useState } from "react";
+import FarmCopilot from "@/components/FarmCopilot";
 import ImageUploader from "@/components/ImageUploader";
 import ResultCard from "@/components/ResultCard";
+import WeatherLocationPicker, { type WeatherLocMode } from "@/components/WeatherLocationPicker";
 import Header from "@/components/Header";
+import { useLocale } from "@/contexts/LocaleContext";
 import { predictDisease } from "@/services/api";
 import type { PredictionResult, Recommendation } from "@/lib/types";
 
-const STATS = [
-  { value: "38", label: "Crop Diseases", icon: "🧬" },
-  { value: "54K", label: "Training Images", icon: "📷" },
-  { value: "95%", label: "Accuracy", icon: "🎯" },
-  { value: "<3s", label: "Analysis Time", icon: "⚡" },
-];
+function getFieldCoords(): Promise<{
+  latitude: number;
+  longitude: number;
+} | null> {
+  if (typeof navigator === "undefined" || !navigator.geolocation) {
+    return Promise.resolve(null);
+  }
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) =>
+        resolve({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        }),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: 25_000, maximumAge: 0 }
+    );
+  });
+}
 
-const HOW_IT_WORKS = [
-  {
-    step: "01",
-    icon: "📸",
-    title: "Upload a photo",
-    desc: "Take a photo of your crop leaf or upload from gallery. Works with any smartphone camera.",
-  },
-  {
-    step: "02",
-    icon: "🧠",
-    title: "AI analysis",
-    desc: "Our ResNet model analyzes the leaf, trained on 54,000+ plant images across 38 disease classes.",
-  },
-  {
-    step: "03",
-    icon: "💡",
-    title: "Get treatment plan",
-    desc: "Receive instant diagnosis, confidence score, and a tailored treatment & prevention plan.",
-  },
-];
+type ManualParse =
+  | { kind: "ok"; coords: { latitude: number; longitude: number } }
+  | { kind: "skip" }
+  | { kind: "error"; messageKey: "coordsIncomplete" | "coordsInvalid" };
+
+function parseManualCoords(latStr: string, lonStr: string): ManualParse {
+  const lat = latStr.trim();
+  const lon = lonStr.trim();
+  if (lat === "" && lon === "") return { kind: "skip" };
+  if (lat === "" || lon === "") return { kind: "error", messageKey: "coordsIncomplete" };
+  const la = Number(lat);
+  const lo = Number(lon);
+  if (Number.isNaN(la) || Number.isNaN(lo)) return { kind: "error", messageKey: "coordsInvalid" };
+  if (la < -90 || la > 90 || lo < -180 || lo > 180) return { kind: "error", messageKey: "coordsInvalid" };
+  return { kind: "ok", coords: { latitude: la, longitude: lo } };
+}
 
 export default function HomePage() {
+  const { t } = useLocale();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PredictionResult | null>(null);
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [soilPh, setSoilPh] = useState<string>("6.5");
-  const [recentRainfall, setRecentRainfall] = useState<string>("12mm");
-  const [lat, setLat] = useState<string>("34.0522");
-  const [lon, setLon] = useState<string>("-118.2437");
+
+  const [weatherMode, setWeatherMode] = useState<WeatherLocMode>("gps");
+  const [manualLat, setManualLat] = useState("");
+  const [manualLon, setManualLon] = useState("");
+
+  const [lastGeo, setLastGeo] = useState<{ lat: number; lon: number } | null>(null);
+  const [geoFailed, setGeoFailed] = useState(false);
+  const [lastGeoSource, setLastGeoSource] = useState<"gps" | "manual" | null>(null);
 
   const handleImageSelected = async (file: File) => {
     setLoading(true);
     setError(null);
     setResult(null);
     setRecommendation(null);
+    setLastGeo(null);
+    setGeoFailed(false);
+    setLastGeoSource(null);
 
     try {
-      const data = await predictDisease(file, {
-        soil_ph: soilPh,
-        recent_rainfall: recentRainfall,
-        location: { lat: parseFloat(lat) || 34.0522, lon: parseFloat(lon) || -118.2437 }
-      });
+      let coords: { latitude: number; longitude: number } | null = null;
+      let source: "gps" | "manual" | null = null;
+
+      if (weatherMode === "manual") {
+        const parsed = parseManualCoords(manualLat, manualLon);
+        if (parsed.kind === "error") {
+          setError(t(parsed.messageKey));
+          setLoading(false);
+          return;
+        }
+        if (parsed.kind === "ok") {
+          coords = parsed.coords;
+          source = "manual";
+          setLastGeo({ lat: coords.latitude, lon: coords.longitude });
+        }
+      } else {
+        coords = await getFieldCoords();
+        if (coords) {
+          source = "gps";
+          setLastGeo({ lat: coords.latitude, lon: coords.longitude });
+        } else {
+          setGeoFailed(true);
+        }
+      }
+
+      setLastGeoSource(source);
+      const data = await predictDisease(file, coords);
       setResult(data.prediction);
       setRecommendation(data.recommendation);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Something went wrong. Try again."
-      );
+      setError(err instanceof Error ? err.message : "Something went wrong. Try again.");
     } finally {
       setLoading(false);
     }
@@ -74,20 +114,37 @@ export default function HomePage() {
     setRecommendation(null);
     setError(null);
     setPreview(null);
+    setLastGeo(null);
+    setGeoFailed(false);
+    setLastGeoSource(null);
+    setWeatherMode("gps");
+    setManualLat("");
+    setManualLon("");
   };
+
+  const stats = [
+    { icon: "👁️", valueKey: "statVision" as const, labelKey: "statVisionLabel" as const },
+    { icon: "🔎", valueKey: "statExa" as const, labelKey: "statExaLabel" as const },
+    { icon: "🌦️", valueKey: "statLive" as const, labelKey: "statLiveLabel" as const },
+    { icon: "⚡", valueKey: "statTime" as const, labelKey: "statTimeLabel" as const },
+  ];
+
+  const steps = [
+    { step: "01", icon: "📸", titleKey: "how1Title" as const, descKey: "how1Desc" as const },
+    { step: "02", icon: "🧠", titleKey: "how2Title" as const, descKey: "how2Desc" as const },
+    { step: "03", icon: "💡", titleKey: "how3Title" as const, descKey: "how3Desc" as const },
+  ];
 
   return (
     <>
-      {/* Animated background */}
       <div className="bg-mesh" />
 
       <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         <Header />
 
-        <main style={{ flex: 1, padding: "0 20px 40px" }}>
-          <div style={{ maxWidth: 680, margin: "0 auto" }}>
+        <main className="app-main" style={{ flex: 1, padding: "0 20px 40px" }}>
+          <div className="app-main__inner">
 
-            {/* ── Hero section ── */}
             {!result && (
               <section
                 className="animate-fade-in-up"
@@ -109,7 +166,7 @@ export default function HomePage() {
                     letterSpacing: "0.03em",
                   }}
                 >
-                  <span>✨</span> AI-Powered Crop Health
+                  {t("heroBadge")}
                 </div>
 
                 <h2
@@ -122,7 +179,7 @@ export default function HomePage() {
                     marginBottom: 14,
                   }}
                 >
-                  Diagnose Your Crop
+                  {t("heroTitle")}
                   <br />
                   <span
                     style={{
@@ -131,25 +188,23 @@ export default function HomePage() {
                       WebkitTextFillColor: "transparent",
                     }}
                   >
-                    Instantly
+                    {t("heroTitleHighlight")}
                   </span>
                 </h2>
                 <p
                   style={{
                     fontSize: 15,
                     color: "var(--text-muted)",
-                    maxWidth: 400,
+                    maxWidth: 440,
                     margin: "0 auto",
                     lineHeight: 1.7,
                   }}
                 >
-                  Snap a photo of a diseased leaf and our AI will identify the
-                  disease and give you a full treatment plan in seconds.
+                  {t("heroSubtitle")}
                 </p>
               </section>
             )}
 
-            {/* ── Stats row ── */}
             {!result && (
               <div
                 className="animate-fade-in-up delay-100"
@@ -157,58 +212,47 @@ export default function HomePage() {
                   display: "grid",
                   gridTemplateColumns: "repeat(4, 1fr)",
                   gap: 10,
-                  marginBottom: 28,
+                  marginBottom: 20,
                 }}
               >
-                {STATS.map(({ value, label, icon }) => (
-                  <div key={label} className="stat-card" style={{ textAlign: "center" }}>
+                {stats.map(({ icon, valueKey, labelKey }) => (
+                  <div key={labelKey} className="stat-card" style={{ textAlign: "center" }}>
                     <div style={{ fontSize: 20, marginBottom: 4 }}>{icon}</div>
                     <div
                       style={{
-                        fontSize: 20,
+                        fontSize: 17,
                         fontWeight: 800,
                         color: "var(--green-400)",
                         letterSpacing: "-0.02em",
                       }}
                     >
-                      {value}
+                      {t(valueKey)}
                     </div>
                     <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
-                      {label}
+                      {t(labelKey)}
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* ── Main upload / result area ── */}
+            <FarmCopilot />
+
             <div className="animate-fade-in-up delay-200">
               {!result ? (
                 <div className="glass-card" style={{ padding: 24 }}>
-                  
-                  {/* Env Data Form */}
-                  <div style={{ marginBottom: 20, padding: 16, background: "rgba(255,255,255,0.03)", borderRadius: 12, border: "1px solid var(--border)" }}>
-                    <h4 style={{ fontSize: 13, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 12 }}>Environmental Context (Optional)</h4>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                      <div>
-                        <label style={{ display: "block", fontSize: 11, color: "var(--text-muted)", marginBottom: 4 }}>Soil pH</label>
-                        <input type="text" value={soilPh} onChange={e => setSoilPh(e.target.value)} placeholder="e.g. 6.5" style={{ width: "100%", padding: "8px 12px", borderRadius: 8, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", color: "var(--text-primary)", fontSize: 13, outline: "none" }} />
-                      </div>
-                      <div>
-                        <label style={{ display: "block", fontSize: 11, color: "var(--text-muted)", marginBottom: 4 }}>Recent Rainfall</label>
-                        <input type="text" value={recentRainfall} onChange={e => setRecentRainfall(e.target.value)} placeholder="e.g. 12mm" style={{ width: "100%", padding: "8px 12px", borderRadius: 8, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", color: "var(--text-primary)", fontSize: 13, outline: "none" }} />
-                      </div>
-                      <div>
-                        <label style={{ display: "block", fontSize: 11, color: "var(--text-muted)", marginBottom: 4 }}>Latitude</label>
-                        <input type="text" value={lat} onChange={e => setLat(e.target.value)} placeholder="34.0522" style={{ width: "100%", padding: "8px 12px", borderRadius: 8, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", color: "var(--text-primary)", fontSize: 13, outline: "none" }} />
-                      </div>
-                      <div>
-                        <label style={{ display: "block", fontSize: 11, color: "var(--text-muted)", marginBottom: 4 }}>Longitude</label>
-                        <input type="text" value={lon} onChange={e => setLon(e.target.value)} placeholder="-118.2437" style={{ width: "100%", padding: "8px 12px", borderRadius: 8, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", color: "var(--text-primary)", fontSize: 13, outline: "none" }} />
-                      </div>
-                    </div>
-                  </div>
-
+                  <p
+                    style={{
+                      fontSize: 12,
+                      color: "var(--text-muted)",
+                      lineHeight: 1.55,
+                      marginBottom: 16,
+                      paddingBottom: 14,
+                      borderBottom: "1px solid var(--border)",
+                    }}
+                  >
+                    📍 {t("geoNotice")}
+                  </p>
                   <ImageUploader
                     onImageSelected={handleImageSelected}
                     loading={loading}
@@ -216,7 +260,6 @@ export default function HomePage() {
                     setPreview={setPreview}
                   />
 
-                  {/* Error message */}
                   {error && (
                     <div
                       id="error-message"
@@ -237,9 +280,10 @@ export default function HomePage() {
                       <span style={{ fontSize: 16 }}>⚠️</span>
                       {error}
                       <button
+                        type="button"
                         onClick={() => setError(null)}
                         style={{
-                          marginLeft: "auto",
+                          marginInlineStart: "auto",
                           background: "none",
                           border: "none",
                           color: "var(--danger)",
@@ -259,11 +303,15 @@ export default function HomePage() {
                   recommendation={recommendation}
                   onReset={handleReset}
                   preview={preview}
+                  geo={{
+                    coords: lastGeo,
+                    failed: geoFailed,
+                    source: lastGeoSource,
+                  }}
                 />
               )}
             </div>
 
-            {/* ── How it works section ── */}
             {!result && (
               <section
                 id="how-it-works"
@@ -279,10 +327,10 @@ export default function HomePage() {
                       marginBottom: 8,
                     }}
                   >
-                    How It Works
+                    {t("howWorksTitle")}
                   </h3>
                   <p style={{ fontSize: 13, color: "var(--text-muted)" }}>
-                    From photo to diagnosis in 3 simple steps
+                    {t("howWorksSubtitle")}
                   </p>
                 </div>
 
@@ -293,7 +341,7 @@ export default function HomePage() {
                     gap: 14,
                   }}
                 >
-                  {HOW_IT_WORKS.map(({ step, icon, title, desc }) => (
+                  {steps.map(({ step, icon, titleKey, descKey }) => (
                     <div key={step} className="stat-card" style={{ padding: 18 }}>
                       <div
                         style={{
@@ -315,10 +363,10 @@ export default function HomePage() {
                           marginBottom: 6,
                         }}
                       >
-                        {title}
+                        {t(titleKey)}
                       </h4>
                       <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6 }}>
-                        {desc}
+                        {t(descKey)}
                       </p>
                     </div>
                   ))}
@@ -328,7 +376,6 @@ export default function HomePage() {
           </div>
         </main>
 
-        {/* Footer */}
         <footer
           style={{
             borderTop: "1px solid var(--border)",
@@ -347,14 +394,8 @@ export default function HomePage() {
               gap: 8,
             }}
           >
-            <span style={{ fontSize: 12, color: "var(--text-dim)" }}>
-              🌿 Dr. Crop v0.1 — AI Crop Disease Detection
-            </span>
-            <div style={{ display: "flex", gap: 16 }}>
-              <span style={{ fontSize: 12, color: "var(--text-dim)" }}>
-                Built with Next.js · FastAPI · PyTorch
-              </span>
-            </div>
+            <span style={{ fontSize: 12, color: "var(--text-dim)" }}>{t("footerLeft")}</span>
+            <span style={{ fontSize: 12, color: "var(--text-dim)" }}>{t("footerRight")}</span>
           </div>
         </footer>
       </div>

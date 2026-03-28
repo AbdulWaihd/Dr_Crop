@@ -1,3 +1,4 @@
+import type { Locale } from "@/lib/i18n";
 import type {
   PredictionResult,
   Recommendation,
@@ -6,13 +7,20 @@ import type {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+function coordsPayload(coords?: { latitude: number; longitude: number } | null) {
+  if (
+    coords == null ||
+    typeof coords.latitude !== "number" ||
+    typeof coords.longitude !== "number"
+  ) {
+    return {};
+  }
+  return { latitude: coords.latitude, longitude: coords.longitude };
+}
+
 export async function predictDisease(
   file: File,
-  envData?: {
-    soil_ph?: string;
-    recent_rainfall?: string;
-    location?: { lat: number; lon: number };
-  }
+  coords?: { latitude: number; longitude: number } | null
 ): Promise<FullDiagnosisResponse> {
   const formData = new FormData();
   formData.append("file", file);
@@ -23,7 +31,19 @@ export async function predictDisease(
   });
 
   if (!predRes.ok) {
-    throw new Error(`Prediction failed (${predRes.status})`);
+    let detail = predRes.statusText;
+    try {
+      const errBody = await predRes.json();
+      if (errBody?.detail) {
+        detail =
+          typeof errBody.detail === "string"
+            ? errBody.detail
+            : JSON.stringify(errBody.detail);
+      }
+    } catch {
+      /* ignore */
+    }
+    throw new Error(`Prediction failed (${predRes.status}): ${detail}`);
   }
 
   const prediction: PredictionResult = await predRes.json();
@@ -31,12 +51,10 @@ export async function predictDisease(
   const recRes = await fetch(`${API_BASE}/recommend`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ 
-      disease: prediction.disease, 
+    body: JSON.stringify({
+      disease: prediction.disease,
       crop: prediction.crop,
-      location: envData?.location || { lat: 34.0522, lon: -118.2437 },
-      soil_ph: envData?.soil_ph ? parseFloat(envData.soil_ph) : 6.5,
-      recent_rainfall: envData?.recent_rainfall || "12mm"
+      ...coordsPayload(coords),
     }),
   });
 
@@ -45,12 +63,46 @@ export async function predictDisease(
     recommendation = await recRes.json();
   } else {
     recommendation = {
-      ipm_plan: ["Unable to fetch recommendations at this time."],
-      irrigation_schedule: ["N/A"],
-      vulnerability_analysis: "N/A",
+      treatment: "Unable to fetch recommendations at this time.",
+      prevention: "N/A",
+      fertilizer: "N/A",
       confidence_note: "Recommendation service unavailable.",
+      irrigation_water: "",
+      soil_health_yield: "",
+      crop_practices_yield: "",
+      air_quality_advice: "",
+      yield_uplift_comparison: "",
+      field_conditions: null,
+      air_quality: null,
     };
   }
 
   return { prediction, recommendation };
+}
+
+export async function askFarmCopilot(question: string, locale: Locale): Promise<string> {
+  const res = await fetch(`${API_BASE}/copilot`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question, locale }),
+  });
+
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      const errBody = await res.json();
+      if (errBody?.detail) {
+        detail =
+          typeof errBody.detail === "string"
+            ? errBody.detail
+            : JSON.stringify(errBody.detail);
+      }
+    } catch {
+      /* ignore */
+    }
+    throw new Error(`Copilot failed (${res.status}): ${detail}`);
+  }
+
+  const data = (await res.json()) as { answer: string };
+  return data.answer;
 }

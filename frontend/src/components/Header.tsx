@@ -1,126 +1,56 @@
 "use client";
 
-
+import { useLocale } from "@/contexts/LocaleContext";
+import { LOCALES, type Locale } from "@/lib/i18n";
 import ThemeToggle from "./ThemeToggle";
 
+const LOCALE_LABELS: Record<Locale, string> = {
+  en: "EN",
+  hi: "हि",
+  ur: "اردو",
+};
+
 export default function Header() {
+  const { locale, setLocale, t } = useLocale();
 
   return (
-    <header
-      style={{
-        background: "rgba(10, 15, 13, 0.85)",
-        backdropFilter: "blur(24px)",
-        borderBottom: "1px solid var(--border-bright)",
-        position: "sticky",
-        top: 0,
-        zIndex: 50,
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 720,
-          margin: "0 auto",
-          padding: "0 20px",
-          height: 64,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div
-            className="animate-pulse-glow"
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, #16a34a, #4ade80)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 18,
-              flexShrink: 0,
-            }}
-          >
+    <header className="app-header">
+      <div className="app-header__inner">
+        <div className="app-header__brand">
+          <div className="app-header__logo animate-pulse-glow" aria-hidden>
             🌿
           </div>
           <div>
-            <h1
-              style={{
-                fontSize: 17,
-                fontWeight: 700,
-                color: "var(--text-primary)",
-                letterSpacing: "-0.02em",
-                lineHeight: 1.2,
-              }}
-            >
-              Dr. Crop
-            </h1>
-            <p style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1 }}>
-              AI Disease Detection
-            </p>
+            <h1 className="app-header__title">{t("headerTitle")}</h1>
+            <p className="app-header__subtitle">{t("headerSubtitle")}</p>
           </div>
         </div>
 
-        {/* Nav links */}
-        <nav style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <a
-            href="#how-it-works"
-            style={{
-              padding: "6px 14px",
-              borderRadius: 10,
-              fontSize: 13,
-              color: "var(--text-muted)",
-              textDecoration: "none",
-              transition: "all 0.2s",
-              fontWeight: 500,
-            }}
-            onMouseEnter={(e) => {
-              (e.target as HTMLElement).style.color = "var(--text-secondary)";
-              (e.target as HTMLElement).style.background = "rgba(255,255,255,0.04)";
-            }}
-            onMouseLeave={(e) => {
-              (e.target as HTMLElement).style.color = "var(--text-muted)";
-              (e.target as HTMLElement).style.background = "transparent";
-            }}
-          >
-            How It Works
+        <nav className="app-header__nav">
+          <div className="locale-segment" role="group" aria-label="Language">
+            {LOCALES.map((loc) => (
+              <button
+                key={loc}
+                type="button"
+                aria-current={locale === loc ? "true" : undefined}
+                onClick={() => setLocale(loc)}
+              >
+                {LOCALE_LABELS[loc]}
+              </button>
+            ))}
+          </div>
+
+          <a href="#farm-copilot" className="app-header__link">
+            {t("navCopilot")}
           </a>
-          <a
-            href="#crops"
-            style={{
-              padding: "6px 14px",
-              borderRadius: 10,
-              fontSize: 13,
-              color: "var(--text-muted)",
-              textDecoration: "none",
-              transition: "all 0.2s",
-              fontWeight: 500,
-            }}
-            onMouseEnter={(e) => {
-              (e.target as HTMLElement).style.color = "var(--text-secondary)";
-              (e.target as HTMLElement).style.background = "rgba(255,255,255,0.04)";
-            }}
-            onMouseLeave={(e) => {
-              (e.target as HTMLElement).style.color = "var(--text-muted)";
-              (e.target as HTMLElement).style.background = "transparent";
-            }}
-          >
-            Diseases
+          <a href="#how-it-works" className="app-header__link">
+            {t("navHow")}
           </a>
-          <div
-            style={{
-              width: 1,
-              height: 20,
-              background: "var(--border-bright)",
-              margin: "0 6px",
-            }}
-          />
-          <div
-            className="badge badge-success"
-            style={{ fontSize: 11, marginRight: 8 }}
-          >
+          <a href="#crops" className="app-header__link">
+            {t("navDiseases")}
+          </a>
+          <span className="app-header__divider" aria-hidden />
+          <div className="badge badge-success app-header__badge">
             <span
               style={{
                 width: 6,
@@ -130,7 +60,7 @@ export default function Header() {
                 display: "inline-block",
               }}
             />
-            AI Online
+            {t("badgeOnline")}
           </div>
           <ThemeToggle />
         </nav>

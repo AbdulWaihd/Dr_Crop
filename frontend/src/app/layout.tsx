@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import PWARegister from "@/components/PWARegister";
+import Providers from "@/components/Providers";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,7 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Dr. Crop — Crop Disease Detection",
   description:
-    "Snap a photo of your crop leaf and get instant disease diagnosis with treatment recommendations.",
+    "Friendly help for farmers: crop health checks, simple farming advice in English, Hindi, and Urdu.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -48,7 +49,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <PWARegister />
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

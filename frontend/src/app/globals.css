@@ -2,8 +2,8 @@
 @import "tailwindcss";
 
 :root {
-  --bg-primary: #0a0f0d;
-  --bg-secondary: #111a14;
+  --bg-primary: #0c0e0d;
+  --bg-secondary: #121814;
   --bg-card: #141f17;
   --bg-card-hover: #192418;
   --surface: #1e2d21;
@@ -365,3 +365,140 @@ body {
   transition: opacity 0.2s;
 }
 .tooltip:hover::after { opacity: 1; }
+
+/* App shell — mobile-first, generous touch targets */
+.app-main {
+  padding-bottom: max(2rem, env(safe-area-inset-bottom));
+}
+
+.app-main__inner {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.result-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 0.5rem;
+}
+
+/* Locale segmented control (header) */
+.locale-segment {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  gap: 2px;
+}
+
+.locale-segment button {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.locale-segment button[aria-current="true"] {
+  background: var(--green-600);
+  color: #fff;
+}
+
+.locale-segment button:hover:not([aria-current="true"]) {
+  color: var(--text-secondary);
+}
+
+/* Sticky header — compact, readable */
+.app-header {
+  background: rgba(12, 14, 13, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-bright);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.app-header__inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 20px;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.app-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-header__logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #16a34a, #4ade80);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.app-header__title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.app-header__subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1;
+  margin: 0;
+}
+
+.app-header__nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.app-header__link {
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.app-header__link:hover {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.app-header__divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-bright);
+  margin: 0 4px;
+}
+
+.app-header__badge {
+  font-size: 11px;
+}

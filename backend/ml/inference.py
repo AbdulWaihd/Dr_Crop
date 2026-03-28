@@ -1,5 +1,7 @@
 """
-Inference pipeline: image → tensor → model → prediction dict.
+Legacy ResNet inference (optional / offline experiments).
+
+Production `/predict` uses vision LLM + Exa RAG — see `app.services.vision_diagnosis_service`.
 """
 
 import torch
