@@ -41,6 +41,10 @@ export default function HomePage() {
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [soilPh, setSoilPh] = useState<string>("6.5");
+  const [recentRainfall, setRecentRainfall] = useState<string>("12mm");
+  const [lat, setLat] = useState<string>("34.0522");
+  const [lon, setLon] = useState<string>("-118.2437");
 
   const handleImageSelected = async (file: File) => {
     setLoading(true);
@@ -49,7 +53,11 @@ export default function HomePage() {
     setRecommendation(null);
 
     try {
-      const data = await predictDisease(file);
+      const data = await predictDisease(file, {
+        soil_ph: soilPh,
+        recent_rainfall: recentRainfall,
+        location: { lat: parseFloat(lat) || 34.0522, lon: parseFloat(lon) || -118.2437 }
+      });
       setResult(data.prediction);
       setRecommendation(data.recommendation);
     } catch (err) {
@@ -177,6 +185,30 @@ export default function HomePage() {
             <div className="animate-fade-in-up delay-200">
               {!result ? (
                 <div className="glass-card" style={{ padding: 24 }}>
+                  
+                  {/* Env Data Form */}
+                  <div style={{ marginBottom: 20, padding: 16, background: "rgba(255,255,255,0.03)", borderRadius: 12, border: "1px solid var(--border)" }}>
+                    <h4 style={{ fontSize: 13, fontWeight: 600, color: "var(--text-secondary)", marginBottom: 12 }}>Environmental Context (Optional)</h4>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                      <div>
+                        <label style={{ display: "block", fontSize: 11, color: "var(--text-muted)", marginBottom: 4 }}>Soil pH</label>
+                        <input type="text" value={soilPh} onChange={e => setSoilPh(e.target.value)} placeholder="e.g. 6.5" style={{ width: "100%", padding: "8px 12px", borderRadius: 8, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", color: "var(--text-primary)", fontSize: 13, outline: "none" }} />
+                      </div>
+                      <div>
+                        <label style={{ display: "block", fontSize: 11, color: "var(--text-muted)", marginBottom: 4 }}>Recent Rainfall</label>
+                        <input type="text" value={recentRainfall} onChange={e => setRecentRainfall(e.target.value)} placeholder="e.g. 12mm" style={{ width: "100%", padding: "8px 12px", borderRadius: 8, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", color: "var(--text-primary)", fontSize: 13, outline: "none" }} />
+                      </div>
+                      <div>
+                        <label style={{ display: "block", fontSize: 11, color: "var(--text-muted)", marginBottom: 4 }}>Latitude</label>
+                        <input type="text" value={lat} onChange={e => setLat(e.target.value)} placeholder="34.0522" style={{ width: "100%", padding: "8px 12px", borderRadius: 8, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", color: "var(--text-primary)", fontSize: 13, outline: "none" }} />
+                      </div>
+                      <div>
+                        <label style={{ display: "block", fontSize: 11, color: "var(--text-muted)", marginBottom: 4 }}>Longitude</label>
+                        <input type="text" value={lon} onChange={e => setLon(e.target.value)} placeholder="-118.2437" style={{ width: "100%", padding: "8px 12px", borderRadius: 8, background: "rgba(0,0,0,0.2)", border: "1px solid var(--border)", color: "var(--text-primary)", fontSize: 13, outline: "none" }} />
+                      </div>
+                    </div>
+                  </div>
+
                   <ImageUploader
                     onImageSelected={handleImageSelected}
                     loading={loading}

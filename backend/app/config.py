@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     apify_api_key: str = ""
     llm_base_url: str = "https://api.openai.com/v1"
     llm_model: str = "gpt-4o-mini"
+    openweathermap_api_key: str = ""
     model_path: str = "ml/model.pth"
     allowed_origins: list[str] = ["http://localhost:3000"]
 

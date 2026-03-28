@@ -13,8 +13,8 @@ interface Props {
 export default function ResultCard({ prediction, recommendation, onReset, preview }: Props) {
   const confidencePercent = Math.round(prediction.confidence * 100);
   const isHealthy = prediction.disease.toLowerCase().includes("healthy");
-  const [activeTab, setActiveTab] = useState<"treatment" | "prevention" | "fertilizer">(
-    "treatment"
+  const [activeTab, setActiveTab] = useState<"ipm_plan" | "irrigation_schedule" | "vulnerability">(
+    "ipm_plan"
   );
   const [copied, setCopied] = useState(false);
 
@@ -25,11 +25,14 @@ Crop: ${prediction.crop}
 Disease: ${isHealthy ? "Healthy" : prediction.disease}
 Confidence: ${confidencePercent}%
 
-${recommendation && !isHealthy ? `Treatment: ${recommendation.treatment}
+${recommendation && !isHealthy ? `IPM Plan: 
+${recommendation.ipm_plan.join("\n")}
 
-Prevention: ${recommendation.prevention}
+Irrigation Schedule:
+${recommendation.irrigation_schedule.join("\n")}
 
-Fertilizer: ${recommendation.fertilizer}` : ""}`;
+Vulnerability Analysis:
+${recommendation.vulnerability_analysis}` : ""}`;
     navigator.clipboard.writeText(report);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
@@ -133,7 +136,7 @@ Fertilizer: ${recommendation.fertilizer}` : ""}`;
               borderRadius: 12,
             }}
           >
-            {(["treatment", "prevention", "fertilizer"] as const).map((tab) => (
+            {(["ipm_plan", "irrigation_schedule", "vulnerability"] as const).map((tab) => (
               <button
                 key={tab}
                 id={`tab-${tab}`}
@@ -151,7 +154,7 @@ Fertilizer: ${recommendation.fertilizer}` : ""}`;
                   color: activeTab === tab ? "#fff" : "var(--text-muted)",
                 }}
               >
-                {tab === "treatment" ? "💊 Treatment" : tab === "prevention" ? "🛡️ Prevention" : "🌱 Fertilizer"}
+                {tab === "ipm_plan" ? "🛡️ IPM Plan" : tab === "irrigation_schedule" ? "💧 Irrigation" : "⚠️ Analysis"}
               </button>
             ))}
           </div>
@@ -170,9 +173,17 @@ Fertilizer: ${recommendation.fertilizer}` : ""}`;
               lineHeight: 1.7,
             }}
           >
-            {activeTab === "treatment" && recommendation.treatment}
-            {activeTab === "prevention" && recommendation.prevention}
-            {activeTab === "fertilizer" && recommendation.fertilizer}
+            {activeTab === "ipm_plan" && (
+              <ul style={{ paddingLeft: 16 }}>
+                {recommendation.ipm_plan.map((step, i) => <li key={i} style={{ marginBottom: 6 }}>{step}</li>)}
+              </ul>
+            )}
+            {activeTab === "irrigation_schedule" && (
+              <ul style={{ paddingLeft: 16 }}>
+                {recommendation.irrigation_schedule.map((step, i) => <li key={i} style={{ marginBottom: 6 }}>{step}</li>)}
+              </ul>
+            )}
+            {activeTab === "vulnerability" && recommendation.vulnerability_analysis}
           </div>
 
           {recommendation.confidence_note && (

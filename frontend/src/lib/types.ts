@@ -5,9 +5,9 @@ export interface PredictionResult {
 }
 
 export interface Recommendation {
-  treatment: string;
-  prevention: string;
-  fertilizer: string;
+  ipm_plan: string[];
+  irrigation_schedule: string[];
+  vulnerability_analysis: string;
   confidence_note: string;
 }
 

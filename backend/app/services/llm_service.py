@@ -4,25 +4,31 @@ import httpx
 from app.config import get_settings
 
 SYSTEM_PROMPT = """\
-You are an agricultural expert AI. Given a crop disease diagnosis and research context,
-provide actionable treatment advice in JSON format with these exact keys:
-treatment, prevention, fertilizer, confidence_note.
+You are an expert plant pathologist, digital crop consultant, and agronomist.
+Given a crop disease diagnosis, local weather conditions, environmental facts, and research context,
+explain why the environmental factors made the plant vulnerable. Provide a 3-step integrated pest management (IPM) plan focusing on organic recovery first.
+Also suggest a precise irrigation schedule.
+Return your advice in valid JSON format with these exact keys:
+ipm_plan (list of strings), irrigation_schedule (list of strings), vulnerability_analysis (string), confidence_note (string).
 Return ONLY valid JSON — no markdown fences, no extra text."""
 
 
 async def generate_recommendation(
-    context: str, disease: str, crop: str
-) -> dict[str, str]:
+    context: str, disease: str, crop: str, env_data: dict = None
+) -> dict:
     """Call an OpenAI-compatible LLM to generate structured treatment advice."""
     settings = get_settings()
 
     if not settings.llm_api_key:
         return _fallback_recommendation(disease, crop)
 
+    env_str = json.dumps(env_data, indent=2) if env_data else "No additional environmental data provided."
+
     user_prompt = (
         f"Crop: {crop}\nDisease: {disease}\n\n"
+        f"Environmental & Weather Data:\n{env_str}\n\n"
         f"Research context:\n{context}\n\n"
-        f"Provide a JSON object with treatment, prevention, fertilizer, and confidence_note."
+        f"Provide a JSON object with ipm_plan, irrigation_schedule, vulnerability_analysis, and confidence_note."
     )
 
     async with httpx.AsyncClient(timeout=30) as client:
@@ -47,11 +53,18 @@ async def generate_recommendation(
         return _fallback_recommendation(disease, crop)
 
 
-def _fallback_recommendation(disease: str, crop: str) -> dict[str, str]:
+def _fallback_recommendation(disease: str, crop: str) -> dict:
     """Return placeholder advice when LLM is unavailable."""
     return {
-        "treatment": f"Apply appropriate fungicide for {disease} on {crop}. Remove and destroy infected plant parts.",
-        "prevention": "Practice crop rotation, use resistant varieties, ensure proper plant spacing.",
-        "fertilizer": "Use balanced NPK fertilizer. Avoid excessive nitrogen which promotes disease-susceptible growth.",
+        "ipm_plan": [
+            "Cultural: Remove and destroy infected plant parts immediately.",
+            "Biological: Use beneficial microbes if available.",
+            f"Chemical/Organic: Apply appropriate organic fungicide for {disease}."
+        ],
+        "irrigation_schedule": [
+            "Day 1-2: Strict dry-down. Avoid overhead watering.",
+            "Day 3-5: Targeted root-zone watering early in the morning."
+        ],
+        "vulnerability_analysis": "High humidity and current weather conditions create an optimal breeding ground for fungal spores. Moisture management is critical.",
         "confidence_note": "This is a placeholder recommendation. Connect an LLM API key for tailored advice.",
     }
