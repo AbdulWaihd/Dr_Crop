@@ -1,112 +1,292 @@
 "use client";
 
+import { useState } from "react";
 import type { PredictionResult, Recommendation } from "@/lib/types";
 
 interface Props {
   prediction: PredictionResult;
   recommendation: Recommendation | null;
   onReset: () => void;
+  preview: string | null;
 }
 
-export default function ResultCard({
-  prediction,
-  recommendation,
-  onReset,
-}: Props) {
+export default function ResultCard({ prediction, recommendation, onReset, preview }: Props) {
   const confidencePercent = Math.round(prediction.confidence * 100);
   const isHealthy = prediction.disease.toLowerCase().includes("healthy");
+  const [activeTab, setActiveTab] = useState<"treatment" | "prevention" | "fertilizer">(
+    "treatment"
+  );
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyReport = () => {
+    const report = `Dr. Crop Diagnosis Report
+========================
+Crop: ${prediction.crop}
+Disease: ${isHealthy ? "Healthy" : prediction.disease}
+Confidence: ${confidencePercent}%
+
+${recommendation && !isHealthy ? `Treatment: ${recommendation.treatment}
+
+Prevention: ${recommendation.prevention}
+
+Fertilizer: ${recommendation.fertilizer}` : ""}`;
+    navigator.clipboard.writeText(report);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  const severity = confidencePercent >= 80 ? "High" : confidencePercent >= 50 ? "Medium" : "Low";
+  const severityColor =
+    confidencePercent >= 80 ? "var(--danger)" : confidencePercent >= 50 ? "var(--warning)" : "var(--success)";
 
   return (
-    <div className="w-full space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Diagnosis card */}
-      <div className="bg-surface rounded-2xl shadow-lg p-5 border border-border">
-        <div className="flex items-start justify-between mb-3">
-          <h3 className="text-lg font-bold">Diagnosis</h3>
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-semibold ${
-              isHealthy
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
-            }`}
-          >
-            {isHealthy ? "Healthy" : "Disease Detected"}
-          </span>
-        </div>
+    <div className="animate-fade-in-up" style={{ width: "100%", display: "flex", flexDirection: "column", gap: 16 }}>
 
-        <div className="space-y-2">
-          <InfoRow label="Crop" value={prediction.crop} />
-          <InfoRow
-            label="Disease"
-            value={isHealthy ? "None — your crop looks healthy!" : prediction.disease}
-          />
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted">Confidence</span>
-            <div className="flex items-center gap-2">
-              <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary rounded-full transition-all duration-700"
-                  style={{ width: `${confidencePercent}%` }}
-                />
-              </div>
-              <span className="text-sm font-semibold">{confidencePercent}%</span>
+      {/* Top summary card */}
+      <div className="glass-card glow-green-sm" style={{ padding: 20 }}>
+        <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+
+          {/* Thumbnail */}
+          {preview && (
+            <img
+              src={preview}
+              alt="Scanned leaf"
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: 12,
+                objectFit: "cover",
+                border: "2px solid var(--border-bright)",
+                flexShrink: 0,
+              }}
+            />
+          )}
+
+          {/* Diagnosis info */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
+                Diagnosis Result
+              </h3>
+              <span className={`badge ${isHealthy ? "badge-success" : "badge-danger"}`}>
+                {isHealthy ? "✓ Healthy" : "⚠ Disease Found"}
+              </span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <InfoRow label="Crop Type" value={prediction.crop} />
+              <InfoRow
+                label="Condition"
+                value={isHealthy ? "No disease detected" : prediction.disease}
+                highlight={!isHealthy}
+              />
             </div>
           </div>
         </div>
+
+        {/* Confidence bar */}
+        <div style={{ marginTop: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Model confidence</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--green-400)" }}>
+              {confidencePercent}%
+            </span>
+          </div>
+          <div className="confidence-track">
+            <div className="confidence-fill" style={{ width: `${confidencePercent}%` }} />
+          </div>
+        </div>
+
+        {/* Severity badge (if disease) */}
+        {!isHealthy && (
+          <div style={{ marginTop: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div className="feature-pill" style={{ fontSize: 12 }}>
+              <span
+                style={{ width: 8, height: 8, borderRadius: "50%", background: severityColor, display: "inline-block" }}
+              />
+              Severity: <strong style={{ color: severityColor }}>{severity}</strong>
+            </div>
+            <div className="feature-pill" style={{ fontSize: 12 }}>
+              🧬 AI-powered analysis
+            </div>
+            <div className="feature-pill" style={{ fontSize: 12 }}>
+              🔬 PlantVillage model
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Recommendations card */}
       {recommendation && !isHealthy && (
-        <div className="bg-surface rounded-2xl shadow-lg p-5 border border-border">
-          <h3 className="text-lg font-bold mb-3">Recommendations</h3>
-          <div className="space-y-3">
-            <RecSection icon="💊" title="Treatment" text={recommendation.treatment} />
-            <RecSection icon="🛡️" title="Prevention" text={recommendation.prevention} />
-            <RecSection icon="🌱" title="Fertilizer" text={recommendation.fertilizer} />
-            {recommendation.confidence_note && (
-              <p className="text-xs text-muted italic mt-2">
-                {recommendation.confidence_note}
-              </p>
-            )}
+        <div className="glass-card" style={{ padding: 20 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", marginBottom: 14 }}>
+            Recommendations
+          </h3>
+
+          {/* Tab buttons */}
+          <div
+            style={{
+              display: "flex",
+              gap: 6,
+              marginBottom: 18,
+              background: "rgba(255,255,255,0.03)",
+              padding: 4,
+              borderRadius: 12,
+            }}
+          >
+            {(["treatment", "prevention", "fertilizer"] as const).map((tab) => (
+              <button
+                key={tab}
+                id={`tab-${tab}`}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  flex: 1,
+                  padding: "8px 10px",
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  background: activeTab === tab ? "var(--green-600)" : "transparent",
+                  color: activeTab === tab ? "#fff" : "var(--text-muted)",
+                }}
+              >
+                {tab === "treatment" ? "💊 Treatment" : tab === "prevention" ? "🛡️ Prevention" : "🌱 Fertilizer"}
+              </button>
+            ))}
           </div>
+
+          {/* Tab content */}
+          <div
+            className="animate-fade-in"
+            key={activeTab}
+            style={{
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid var(--border)",
+              borderRadius: 14,
+              padding: 16,
+              fontSize: 13,
+              color: "var(--text-secondary)",
+              lineHeight: 1.7,
+            }}
+          >
+            {activeTab === "treatment" && recommendation.treatment}
+            {activeTab === "prevention" && recommendation.prevention}
+            {activeTab === "fertilizer" && recommendation.fertilizer}
+          </div>
+
+          {recommendation.confidence_note && (
+            <p
+              style={{
+                marginTop: 10,
+                fontSize: 11,
+                color: "var(--text-dim)",
+                fontStyle: "italic",
+                lineHeight: 1.5,
+              }}
+            >
+              ℹ️ {recommendation.confidence_note}
+            </p>
+          )}
         </div>
       )}
 
-      <button
-        onClick={onReset}
-        className="w-full py-3 bg-foreground text-background font-semibold rounded-2xl
-                   hover:opacity-90 transition-opacity active:scale-[0.98]"
-      >
-        Scan Another Leaf
-      </button>
+      {/* Healthy message */}
+      {isHealthy && (
+        <div
+          className="glass-card animate-fade-in-up delay-100"
+          style={{
+            padding: 24,
+            textAlign: "center",
+            borderColor: "rgba(74,222,128,0.25)",
+          }}
+        >
+          <div style={{ fontSize: 48, marginBottom: 10 }}>🎉</div>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--green-400)", marginBottom: 6 }}>
+            Your crop looks healthy!
+          </h3>
+          <p style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6 }}>
+            No signs of disease detected. Keep maintaining good agricultural practices to preserve your crop&apos;s health.
+          </p>
+        </div>
+      )}
+
+      {/* Action buttons */}
+      <div style={{ display: "flex", gap: 10 }}>
+        <button
+          id="btn-scan-another"
+          onClick={onReset}
+          className="btn-primary"
+          style={{ flex: 2 }}
+        >
+          <ScanIcon />
+          Scan Another Leaf
+        </button>
+        <button
+          id="btn-copy-report"
+          onClick={handleCopyReport}
+          className="btn-ghost"
+          style={{ flex: 1 }}
+        >
+          {copied ? (
+            <>✓ Copied!</>
+          ) : (
+            <>
+              <CopyIcon />
+              Copy Report
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between items-center">
-      <span className="text-sm text-muted">{label}</span>
-      <span className="text-sm font-semibold">{value}</span>
-    </div>
-  );
-}
-
-function RecSection({
-  icon,
-  title,
-  text,
+function InfoRow({
+  label,
+  value,
+  highlight,
 }: {
-  icon: string;
-  title: string;
-  text: string;
+  label: string;
+  value: string;
+  highlight?: boolean;
 }) {
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-1">
-        <span>{icon}</span>
-        <span className="text-sm font-semibold">{title}</span>
-      </div>
-      <p className="text-sm text-muted leading-relaxed pl-7">{text}</p>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{label}</span>
+      <span
+        style={{
+          fontSize: 13,
+          fontWeight: 600,
+          color: highlight ? "var(--danger)" : "var(--text-primary)",
+          maxWidth: "60%",
+          textAlign: "right",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {value}
+      </span>
     </div>
+  );
+}
+
+function ScanIcon() {
+  return (
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round"
+        d="M4 4h4M4 20h4M16 4h4M16 20h4M4 4v4M4 20v-4M20 4v4M20 20v-4M9 12h6" />
+    </svg>
+  );
+}
+
+function CopyIcon() {
+  return (
+    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <rect x="9" y="9" width="13" height="13" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path strokeLinecap="round" strokeLinejoin="round"
+        d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+    </svg>
   );
 }
