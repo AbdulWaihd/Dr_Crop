@@ -1,11 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+
 import ThemeToggle from "./ThemeToggle";
 
 export default function Header() {
-  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <header

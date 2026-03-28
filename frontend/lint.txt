@@ -1,0 +1,57 @@
+
+> frontend@0.1.0 lint
+> eslint
+
+
+C:\Users\faiza\OneDrive\Documents\GitHub\dr_crop\frontend\src\components\Header.tsx
+  3:8   warning  'Link' is defined but never used                  @typescript-eslint/no-unused-vars
+  8:10  warning  'menuOpen' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  8:20  warning  'setMenuOpen' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\faiza\OneDrive\Documents\GitHub\dr_crop\frontend\src\components\ImageUploader.tsx
+   35:30  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `handleFile`, but the source dependencies were []. Inferred dependency not present in source.
+
+C:\Users\faiza\OneDrive\Documents\GitHub\dr_crop\frontend\src\components\ImageUploader.tsx:35:30
+  33 |   const onDragLeave = useCallback(() => setIsDragging(false), []);
+  34 |
+> 35 |   const onDrop = useCallback((e: React.DragEvent) => {
+     |                              ^^^^^^^^^^^^^^^^^^^^^^^^^
+> 36 |     e.preventDefault();
+     | ^^^^^^^^^^^^^^^^^^^^^^^
+> 37 |     setIsDragging(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^
+> 38 |     handleFile(e.dataTransfer.files?.[0]);
+     | ^^^^^^^^^^^^^^^^^^^^^^^
+> 39 |   }, []);
+     | ^^^^ Could not preserve existing manual memoization
+  40 |
+  41 |   return (
+  42 |     <div style={{ width: "100%" }}>  react-hooks/preserve-manual-memoization
+   39:6   warning  React Hook useCallback has a missing dependency: 'handleFile'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           react-hooks/exhaustive-deps
+  107:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @next/next/no-img-element
+
+C:\Users\faiza\OneDrive\Documents\GitHub\dr_crop\frontend\src\components\ResultCard.tsx
+  54:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\faiza\OneDrive\Documents\GitHub\dr_crop\frontend\src\components\ThemeToggle.tsx
+  10:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\faiza\OneDrive\Documents\GitHub\dr_crop\frontend\src\components\ThemeToggle.tsx:10:5
+   8 |
+   9 |   useEffect(() => {
+> 10 |     setMounted(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  11 |     // Initialize theme from localStorage or system preference
+  12 |     const savedTheme = localStorage.getItem("dr-crop-theme") as "dark" | "light" | null;
+  13 |     const sysPrefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;  react-hooks/set-state-in-effect
+
+✖ 8 problems (2 errors, 6 warnings)
+

@@ -15,6 +15,10 @@ export default function ThemeToggle() {
     const initialTheme = savedTheme || (sysPrefersLight ? "light" : "dark");
     setTheme(initialTheme);
     document.documentElement.setAttribute("data-theme", initialTheme);
+    
+    // Defer to next tick to avoid cascading render warning in React Compiler
+    setTimeout(() => setMounted(true), 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleTheme = () => {

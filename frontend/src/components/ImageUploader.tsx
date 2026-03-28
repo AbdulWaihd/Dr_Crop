@@ -25,18 +25,18 @@ export default function ImageUploader({
     onImageSelected(file);
   };
 
-  const onDragOver = useCallback((e: React.DragEvent) => {
+  const onDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
-  }, []);
+  };
 
-  const onDragLeave = useCallback(() => setIsDragging(false), []);
+  const onDragLeave = () => setIsDragging(false);
 
-  const onDrop = useCallback((e: React.DragEvent) => {
+  const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     handleFile(e.dataTransfer.files?.[0]);
-  }, []);
+  };
 
   return (
     <div style={{ width: "100%" }}>
@@ -104,6 +104,7 @@ export default function ImageUploader({
       >
         {preview ? (
           <div style={{ position: "relative", display: "inline-block" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={preview}
               alt="Leaf preview"

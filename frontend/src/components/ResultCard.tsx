@@ -51,6 +51,7 @@ ${recommendation.vulnerability_analysis}` : ""}`;
 
           {/* Thumbnail */}
           {preview && (
+            /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={preview}
               alt="Scanned leaf"
