@@ -42,7 +42,10 @@ function readInitialLocale(): Locale {
 }
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(readInitialLocale);
+  // Use a stable initial value to avoid hydration mismatch.
+  // We'll update to the user's preferred locale in useEffect.
+  const [locale, setLocaleState] = useState<Locale>("en");
+  const [mounted, setMounted] = useState(false);
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
@@ -54,9 +57,19 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    setMounted(true);
+    const initial = readInitialLocale();
+    if (initial !== "en") {
+      setLocaleState(initial);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     document.documentElement.lang = locale;
     document.documentElement.dir = RTL_LOCALES.includes(locale) ? "rtl" : "ltr";
-  }, [locale]);
+  }, [locale, mounted]);
+
 
   const t = useCallback(
     (key: MessageKey, vars?: Record<string, string | number>) => {

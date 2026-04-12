@@ -3,8 +3,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import agro_context, copilot, predict, recommend
-
 app = FastAPI(
     title="Dr. Crop API",
     description="Crop disease detection and recommendation engine",
@@ -12,6 +10,7 @@ app = FastAPI(
 )
 
 # CORS — allow all origins (frontend is on Vercel)
+# Added BEFORE route imports/inclusion to ensure CORS headers are processed first
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -20,10 +19,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from app.routes import agro_context, copilot, predict, recommend
+
 app.include_router(predict.router, tags=["prediction"])
 app.include_router(recommend.router, tags=["recommendation"])
 app.include_router(agro_context.router, tags=["field-data"])
 app.include_router(copilot.router, tags=["copilot"])
+
 
 
 @app.on_event("startup")
