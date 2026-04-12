@@ -1,15 +1,14 @@
-"""Vision service using Llama-3.2-11B-Vision-Instruct via HuggingFace Router."""
+"""Vision service using Llama-3.2-11B-Vision-Instruct via HuggingFace Inference API."""
 
 import base64
 import json
 import re
+import requests
 from typing import Any
 
-from openai import OpenAI
 from app.config import get_hf_token
 
-import requests
-
+VISION_MODEL = "meta-llama/Llama-3.2-11B-Vision-Instruct"
 HF_INFERENCE_URL = f"https://api-inference.huggingface.co/models/{VISION_MODEL}"
 
 def analyze_plant_image(image_bytes: bytes) -> dict[str, Any]:
@@ -27,10 +26,9 @@ def analyze_plant_image(image_bytes: bytes) -> dict[str, Any]:
     image_b64 = base64.b64encode(image_bytes).decode("utf-8")
 
     try:
-        print(f"[vision] Sending image to {VISION_MODEL} via Direct Inference API...")
+        print(f"[vision] Sending image to {VISION_MODEL} via Inference API...")
         
-        # Some providers on HF Router are flaky with vision base64.
-        # Direct Inference API or the Chat completion endpoint via requests is more stable.
+        # Use the Inference API chat completion format
         response = requests.post(
             HF_INFERENCE_URL,
             headers={
@@ -73,7 +71,7 @@ def analyze_plant_image(image_bytes: bytes) -> dict[str, Any]:
 
         res_json = response.json()
         
-        # The inference API might return choices (chat format) or raw text depending on endpoint
+        # Standard chat completion response handling
         if isinstance(res_json, list):
             text = res_json[0].get("generated_text", "")
         elif "choices" in res_json:
@@ -81,12 +79,12 @@ def analyze_plant_image(image_bytes: bytes) -> dict[str, Any]:
         else:
             text = str(res_json)
 
-        print(f"[vision] Received response: {text[:100]}...")
+        print(f"[vision] Received response: {text[:200]}...")
         
         # Extract JSON from response
         match = re.search(r"\{[\s\S]*\}", text)
         if not match:
-            # Maybe the whole response is the JSON?
+            # Fallback to loading directly if no curly braces matched (unlikely)
             return json.loads(text)
             
         return json.loads(match.group())
@@ -99,4 +97,3 @@ def analyze_plant_image(image_bytes: bytes) -> dict[str, Any]:
             "confidence": 0.0,
             "symptoms": str(e)
         }
-
