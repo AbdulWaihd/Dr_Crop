@@ -7,6 +7,8 @@ class PredictionResponse(BaseModel):
     crop: str
     disease: str
     confidence: float
+    symptoms: str = ""
+
 
 
 class FieldConditions(BaseModel):
