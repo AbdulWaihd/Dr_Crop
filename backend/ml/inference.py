@@ -4,7 +4,8 @@ import requests
 
 from app.config import get_hf_token
 
-HF_MODEL_URL = "https://api-inference.huggingface.co/models/ozzyou/plant-disease-ResNet-50"
+HF_MODEL_URL = "https://api-inference.huggingface.co/models/prof-freakenstein/plantnet-disease-detection"
+
 
 
 
