@@ -1,6 +1,6 @@
 """RAG context service using DuckDuckGo search with Wikipedia fallback."""
 
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 import wikipediaapi
 
 
