@@ -27,12 +27,15 @@ class Settings(BaseSettings):
     vision_model: str = "gpt-4o-mini"
     openweathermap_api_key: str = ""
     model_path: str = "ml/model.pth"
-    allowed_origins: list[str] = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3001",
-    ]
+    allowed_origins: list[str] = Field(
+        default=[
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:3001",
+            "http://127.0.0.1:3001",
+        ],
+        validation_alias=AliasChoices("ALLOWED_ORIGINS"),
+    )
 
     model_config = SettingsConfigDict(
         env_file=ENV_FILE_PATH,
