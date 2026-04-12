@@ -63,6 +63,8 @@ function parseManualCoords(latStr: string, lonStr: string): ManualParse {
 export default function HomePage() {
   const { t, locale } = useLocale();
   const [loading, setLoading] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState<any>("statusUploading");
+
   const [result, setResult] = useState<PredictionResult | null>(null);
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -105,6 +107,7 @@ export default function HomePage() {
     setLastGeoSource(null);
 
     try {
+      setLoadingStatus("statusUploading");
       let coords: { latitude: number; longitude: number } | null = null;
       let source: "gps" | "manual" | null = null;
 
@@ -131,14 +134,20 @@ export default function HomePage() {
       }
 
       setLastGeoSource(source);
+      
+      setLoadingStatus("statusAnalyzing");
       const data = await predictDisease(file, coords, locale);
+      
+      setLoadingStatus("statusFetching");
       setResult(data.prediction);
       setRecommendation(data.recommendation);
+      setLoadingStatus("statusDone");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Try again.");
     } finally {
       setLoading(false);
     }
+
   };
 
   const handleReset = () => {
@@ -304,9 +313,11 @@ export default function HomePage() {
                   <ImageUploader
                     onImageSelected={handleImageSelected}
                     loading={loading}
+                    loadingStatus={loadingStatus}
                     preview={preview}
                     setPreview={setPreview}
                   />
+
 
                   {error && (
                     <div

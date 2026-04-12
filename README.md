@@ -2,18 +2,29 @@
 
 A mobile-first Progressive Web App (PWA) that identifies crop diseases from leaf photos, provides AI-powered treatment recommendations, and acts as a localized agricultural assistant for farmers.
 
-**Stack:** Next.js (App Router) · FastAPI · PyTorch · Mistral/OpenAI · Vercel · Render
+**Stack:** Next.js (App Router) · FastAPI · HuggingFace Inference API · Kimi-K2 LLM (HuggingFace Router) · Vercel · Render
 
 ---
 
 ## ✨ Key Features
 
-- 📸 **AI Leaf Diagnosis:** Upload an image of a diseased crop leaf, and our PyTorch-powered ML model + Vision LLM identifies the specific disease and the crop type.
-- 🌍 **Localized Language Support:** Real-time, strict translation of all medical recommendations, UI elements, and Copilot AI responses into **Hindi, Urdu, and English** to ensure maximum accessibility for farmers across regions.
-- 👨‍🌾 **Farm Copilot Chat:** An interactive AI assistant tailored to farming questions. Ask about fertilizers, weather impacts, or crop rotation, and receive expert answers in your chosen language.
-- ⛅ **Location & Weather context:** Automatically pull GPS location or enter coordinates manually to give the AI context about the local weather and geography for better diagnosis.
-- 📄 **PDF Report Generation:** One-click download of the diagnostic report, containing the leaf image, diagnosis, and treatment/fertilizer instructions perfectly formatted in the user's localized language.
-- 📱 **PWA Ready:** Installable as a standalone app on Android/iOS directly from the browser for a native app feel.
+- 📸 **AI Leaf Diagnosis:** Instant crop disease identification powered by a MobileNetV2 model hosted via **HuggingFace Inference API**.
+- 🔍 **Parallel RAG System:** Dual-path context search using **DuckDuckGo** and **Wikipedia** runs in parallel with data fetching to provide accurate, research-backed treatment plans.
+- 🌎 **Localized Language Support:** Real-time, strict translation of all medical recommendations and Copilot AI responses into **Hindi, Urdu, and English**.
+- 👨‍🌾 **Farm Copilot Chat:** An interactive agricultural assistant powered by **Kimi-K2 (Moonshot AI)**. Ask about fertilizers, weather, or soil health in your native script.
+- ⛅ **Live Field Data:** Automatically integrates live weather, soil moisture, and air quality estimates from **Open-Meteo** based on GPS or manual coordinates.
+- 📄 **PDF Report Generation:** One-click download of diagnostic reports, including disease severity, treatment steps, and yield-improvement plans.
+- 📱 **PWA Ready:** Installable directly from the browser for a native experience on Android and iOS.
+
+---
+
+## ⚡ Performance Optimizations
+
+We've implemented a high-performance pipeline to ensure the app feels fast even on rural network conditions:
+- **HF Warmup Strategy:** Automatic ping on server startup wakes up the HuggingFace models, cutting initial classification time from 30s+ to under 5s.
+- **Asynchronous Parallelism:** RAG context retrieval, weather fetching, and air quality analysis run concurrently using Python's `asyncio.gather`.
+- **Intelligent Caching:** In-memory caching for LLM recommendations ensures instant responses for repeated queries of the same disease/crop/locale.
+- **Progressive UI:** Real-time status tracking (Uploading → Analyzing → Fetching → Done) keeps the user engaged during the 6-8 second end-to-end pipeline.
 
 ---
 
@@ -22,95 +33,46 @@ A mobile-first Progressive Web App (PWA) that identifies crop diseases from leaf
 ```text
 Dr_Crop/ (Root)
 │
-├── vercel.json          # ⚙️ Explicit routing config for Vercel deployment
-├── README.md            # 📝 Main project documentation
+├── vercel.json          # ⚙️ Routing config for Vercel
+├── README.md            # 📝 Project documentation
 ├── package.json         # 📦 Root package.json
 │
 ├── frontend/            # 🌐 FRONTEND (Next.js 16)
 │   ├── src/app/         # Next.js App Router (UI & Layout)
 │   ├── src/components/  # FarmCopilot, ImageUploader, ResultCard
-│   ├── src/contexts/    # React Contexts (LocaleContext)
-│   └── src/lib/         # PDF generator & Language logic
+│   ├── src/contexts/    # LocaleContext & Speech logic
+│   └── src/lib/         # PDF generator & i18n logic
 │
 └── backend/             # 🐍 BACKEND (FastAPI - Python 3.12)
-    ├── ml/              # PyTorch model weights & inference logic
+    ├── ml/              # HF Inference API client (MobileNetV2)
     ├── app/routes/      # Endpoints (/predict, /recommend, /copilot)
-    ├── app/services/    # LLM services (Mistral/OpenAI) and prompts
-    └── app/config.py    # Environment variables & CORS
+    ├── app/services/    # RAG (DDG), Weather (OpenMeteo), LLM (Kimi-K2)
+    └── app/main.py      # Startup warmup & route orchestration
 ```
 
 ---
 
 ## 🚀 Deployment Guide
 
-Dr. Crop is configured for a decoupled serverless architecture, ensuring cost-effective and scalable deployment.
-
-### 1. Backend (Render - Free Tier)
-Deploy the FastAPI backend to Render using Python.
-
-1. Create a New Web Service on **Render**.
-2. Connect this repository and set the following:
-   - **Root Directory:** `backend`
-   - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-   - **Environment Variables:** 
-     - `PYTHON_VERSION` = `3.12.7`
-     - `LLM_API_KEY` = `your_openai_or_mistral_key` (Required)
-     - `ALLOWED_ORIGINS` = `*` (Update this to your Vercel URL later)
-3. **Important:** Render Free instances sleep after 15 minutes of inactivity. Set up a free chron job on **[Cron-job.org](https://cron-job.org/)** to ping your backend URL every minute (e.g., `https://dr-crop-app.onrender.com/health`) using a `GET` request to keep the server awake.
+### 1. Backend (Render / Cloud Run)
+1. Set **Root Directory** to `backend`.
+2. **Build Command:** `pip install -r requirements.txt`
+3. **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+4. **Environment Variables:** 
+   - `HF_TOKEN`: Your HuggingFace API Token (Required for Vision & LLM).
+   - `ALLOWED_ORIGINS`: `*` (or your Vercel URL).
 
 ### 2. Frontend (Vercel)
-The Next.js frontend is fully optimized for Vercel. 
-
-1. Create a New Project on **Vercel** and import this repository.
-2. In the project setup, configure the following:
-   - **Root Directory:** `./` (Leave it blank/default. The `vercel.json` file in the root handles the routing explicitly).
-   - **Framework Preset:** Next.js
-   - **Environment Variables:**
-     - `NEXT_PUBLIC_API_URL` = `https://your-render-url.onrender.com` (No trailing slash)
-3. Click **Deploy**.
+1. Import repository to Vercel.
+2. **Environment Variables:**
+   - `NEXT_PUBLIC_API_URL`: `https://your-backend-url.onrender.com`
 
 ---
 
-## 💻 Local Setup & Development
-
-### Prerequisites
-- Node.js 18+
-- Python 3.10+
-
-### 1. Backend Setup
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-
-# Create .env and add LLM_API_KEY
-cp .env.example .env
-
-# Run FastAPI Server
-uvicorn app.main:app --reload --port 8000
-```
-Backend Docs available at: `http://localhost:8000/docs`
-
-### 2. Frontend Setup
-```bash
-cd frontend
-npm install
-
-# Create .env.local and set NEXT_PUBLIC_API_URL=http://localhost:8000
-cp .env.example .env.local
-
-# Run Next.js Server
-npm run dev
-```
-Frontend available at: `http://localhost:3000`
-
----
-
-## 🧠 ML Model Details
-
-The application scaffold initially uses a ResNet-18 placeholder. The backend executes inference via PyTorch (`backend/ml/inference.py`), resizing incoming images and mapping them to predefined `CLASS_NAMES`. It relies on a fallback Vision LLM to verify and complement predictions when specific classes aren't mapped.
+## 🧠 Technology Partners
+- **Models:** [MobileNetV2](https://huggingface.co/linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification) for Vision, [Kimi-K2](https://huggingface.co/moonshotai/Kimi-K2-Instruct) for Reasoning.
+- **Infrastructure:** [HuggingFace Serverless Inference](https://huggingface.co/docs/api-inference/index) + [HuggingFace Router](https://huggingface.co/docs/api-inference/detailed_parameters#router-openai-compatibility).
+- **Data:** [Open-Meteo](https://open-meteo.com/) for agricultural weather & air quality.
 
 ---
 

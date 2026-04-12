@@ -16,6 +16,7 @@ import {
 interface Props {
   onImageSelected: (file: File) => void;
   loading: boolean;
+  loadingStatus?: string;
   preview: string | null;
   setPreview: (p: string | null) => void;
 }
@@ -23,9 +24,11 @@ interface Props {
 export default function ImageUploader({
   onImageSelected,
   loading,
+  loadingStatus,
   preview,
   setPreview,
 }: Props) {
+
   const { t } = useLocale();
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -277,8 +280,9 @@ export default function ImageUploader({
               >
                 <Loader2 size={40} className="animate-spin text-emerald-400" />
                 <p style={{ color: "var(--text-primary)", fontSize: 14, fontWeight: 700, letterSpacing: "0.02em" }}>
-                  {t("uploadAnalyzing")}
+                  {t((loadingStatus as any) || "uploadAnalyzing")}
                 </p>
+
               </div>
             )}
           </div>

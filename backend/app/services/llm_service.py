@@ -110,6 +110,10 @@ def _fallback_recommendation(disease: str, crop: str) -> dict[str, str]:
     }
 
 
+# Simple in-memory cache for recommendations
+_RECOMMEND_CACHE: dict[str, dict[str, str]] = {}
+
+
 async def generate_recommendation(
     context: str,
     disease: str,
@@ -119,7 +123,15 @@ async def generate_recommendation(
     locale: str = "en",
 ) -> dict[str, str]:
     """Call Kimi-K2 via HF Router to generate treatment recommendations."""
+    # Check cache first
+    cache_key = f"{crop}:{disease}:{locale}"
+    if cache_key in _RECOMMEND_CACHE:
+        print(f"[llm] Cache hit for {cache_key}")
+        return _RECOMMEND_CACHE[cache_key]
+
+
     client = _get_client()
+
     if client is None:
         return _fallback_recommendation(disease, crop)
 
@@ -163,8 +175,12 @@ async def generate_recommendation(
             val = raw.get(key)
             if isinstance(val, str) and val.strip():
                 fallback[key] = val.strip()
+        
+        # Cache the successful result
+        _RECOMMEND_CACHE[cache_key] = fallback
         return fallback
     except (json.JSONDecodeError, ValueError) as e:
+
         print(f"[llm] WARNING: Could not parse JSON from LLM: {e}")
         return _fallback_recommendation(disease, crop)
 

@@ -95,6 +95,11 @@ const messagesEn = {
   cameraCancel: "Cancel",
   uploadFormats: "or use the buttons above · JPG, PNG, WebP",
   uploadAnalyzing: "Vision + RAG analysis…",
+  statusUploading: "Uploading image...",
+  statusAnalyzing: "Analyzing disease...",
+  statusFetching: "Fetching treatment...",
+  statusDone: "Done!",
+
 
   resultTitle: "Diagnosis Result",
   resultHealthyBadge: "Healthy",
@@ -248,6 +253,11 @@ const messagesHi: Record<MessageKey, string> = {
   cameraCancel: "रद्द करें",
   uploadFormats: "या ऊपर बटन · JPG, PNG, WebP",
   uploadAnalyzing: "विज़न + RAG विश्लेषण…",
+  statusUploading: "छवि अपलोड हो रही है...",
+  statusAnalyzing: "रोग का विश्लेषण हो रहा है...",
+  statusFetching: "उपचार खोजा जा रहा है...",
+  statusDone: "सम्पन्न!",
+
 
   resultTitle: "निदान परिणाम",
   resultHealthyBadge: "स्वस्थ",
@@ -402,6 +412,11 @@ const messagesUr: Record<MessageKey, string> = {
   cameraCancel: "منسوخ",
   uploadFormats: "یا اوپر بٹن · JPG, PNG, WebP",
   uploadAnalyzing: "ویژن + RAG تجزیہ…",
+  statusUploading: "تصویر اپ لوڈ ہو رہی ہے...",
+  statusAnalyzing: "بیماری کا تجزیہ ہو رہا ہے...",
+  statusFetching: "علاج تلاش کیا جا رہا ہے...",
+  statusDone: "مکمل!",
+
 
   resultTitle: "تشخیص کا نتیجہ",
   resultHealthyBadge: "صحت مند",
