@@ -1,24 +1,18 @@
-from fastapi import APIRouter, File, HTTPException, UploadFile
-from PIL import Image
-import io
+"""POST /predict — Upload image → HuggingFace plant disease classification."""
+
+from fastapi import APIRouter, File, UploadFile
 
 from app.models.schemas import PredictionResponse
-from app.services.vision_diagnosis_service import diagnose_from_image
+from ml.inference import predict_disease
 
 router = APIRouter()
 
 
 @router.post("/predict", response_model=PredictionResponse)
-async def predict_disease(file: UploadFile = File(...)):
-    """
-    Vision LLM (structured dimensions) + Exa RAG + synthesis. Requires LLM_API_KEY.
-    """
+async def predict(file: UploadFile = File(...)):
+    """Upload a leaf image and get crop disease prediction via HF Inference API."""
     contents = await file.read()
-    image = Image.open(io.BytesIO(contents)).convert("RGB")
+    print(f"[route/predict] Received image: {file.filename} ({len(contents)} bytes)")
 
-    try:
-        result = await diagnose_from_image(image)
-    except RuntimeError as e:
-        raise HTTPException(status_code=503, detail=str(e)) from e
-
+    result = predict_disease(contents)
     return PredictionResponse(**result)

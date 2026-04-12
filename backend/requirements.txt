@@ -1,14 +1,12 @@
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
-python-multipart==0.0.20
-Pillow==11.1.0
-numpy==2.2.1
-httpx==0.28.1
-python-dotenv==1.0.1
-pydantic==2.10.4
-pydantic-settings==2.7.1
-# torch and torchvision are only used by ml/inference.py (legacy/offline experiments)
-# The production /predict route uses the vision LLM — no local model needed.
-# Uncomment below if you want to run local ResNet inference experiments:
-# torch==2.5.1
-# torchvision==0.20.1
+fastapi
+uvicorn[standard]
+python-multipart
+Pillow
+requests
+httpx
+openai
+ddgs
+wikipedia-api
+python-dotenv
+pydantic
+pydantic-settings

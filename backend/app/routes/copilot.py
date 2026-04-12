@@ -1,4 +1,5 @@
-import httpx
+"""POST /copilot — Farm assistant Q&A powered by Kimi-K2."""
+
 from fastapi import APIRouter, HTTPException
 
 from app.models.schemas import CopilotRequest, CopilotResponse
@@ -9,26 +10,17 @@ router = APIRouter()
 
 @router.post("/copilot", response_model=CopilotResponse)
 async def farm_copilot(req: CopilotRequest):
+    """Ask the farming copilot a question and get an AI answer."""
     try:
         answer = await generate_copilot_answer(req.question, req.locale)
-    except httpx.HTTPStatusError as e:
-        if e.response.status_code == 401:
-            raise HTTPException(
-                status_code=503,
-                detail=(
-                    "LLM API returned 401 Unauthorized — LLM_API_KEY in backend/.env is wrong or revoked. "
-                    "For OpenAI: https://platform.openai.com/api-keys — for Gemini: Google AI Studio API keys."
-                ),
-            ) from e
+    except Exception as e:
+        print(f"[route/copilot] ERROR: {e}")
         raise HTTPException(
             status_code=503,
             detail=f"Copilot request failed: {e!s}",
         ) from e
-    except httpx.HTTPError as e:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Copilot request failed: {e!s}",
-        ) from e
+
     if not answer:
         raise HTTPException(status_code=503, detail="Empty copilot response.")
+
     return CopilotResponse(answer=answer)
