@@ -19,6 +19,7 @@ export default function FarmCopilot() {
   const { t, locale, isRtl } = useLocale();
   const [q, setQ] = useState("");
   const [answer, setAnswer] = useState<string | null>(null);
+  const [lastAsked, setLastAsked] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,6 +45,25 @@ export default function FarmCopilot() {
     stopVoice();
   }, [locale, stopVoice]);
 
+  useEffect(() => {
+    if (lastAsked && answer && !loading) {
+      // User changed locale, let's re-ask the last question to get translated answer
+      async function retranslate() {
+        setLoading(true);
+        setError(null);
+        try {
+          const a = await askFarmCopilot(lastAsked!, locale);
+          setAnswer(a);
+        } catch (e) {
+          // ignore or show minor error
+        } finally {
+          setLoading(false);
+        }
+      }
+      retranslate();
+    }
+  }, [locale]); // intentionally leaving lastAsked and answer out of deps so it only triggers on locale change.
+
   const voiceErrorLabel = useMemo(() => {
     if (!lastError) return null;
     if (lastError === "unsupported") return t("copilotVoiceNotSupported");
@@ -57,10 +77,16 @@ export default function FarmCopilot() {
 
   const submit = async () => {
     const text = q.trim();
-    if (!text || loading) return;
+    if (loading) return;
+    if (!text) {
+      setError(t("copilotNeedQuestion"));
+      setAnswer(null);
+      return;
+    }
     setLoading(true);
     setError(null);
     setAnswer(null);
+    setLastAsked(text);
     stopVoice();
     try {
       const a = await askFarmCopilot(text, locale);
@@ -115,6 +141,7 @@ export default function FarmCopilot() {
           onChange={(e) => {
             if (listening) stopVoice();
             setQ(e.target.value);
+            setError(null);
           }}
           placeholder={t("copilotPlaceholder")}
           rows={3}
@@ -185,7 +212,7 @@ export default function FarmCopilot() {
             borderLeft: "2px solid rgba(255,255,255,0.1)"
           }}
         >
-          "{interim}"
+          &ldquo;{interim}&rdquo;
         </p>
       ) : null}
 
@@ -200,8 +227,9 @@ export default function FarmCopilot() {
         type="button"
         className="btn-primary"
         style={{ height: 48, padding: "0 28px", borderRadius: 12, gap: 10 }}
-        disabled={loading || !q.trim()}
+        disabled={loading}
         onClick={submit}
+        aria-label={t("copilotSend")}
       >
         {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
         {loading ? t("copilotThinking") : t("copilotSend")}
@@ -229,7 +257,7 @@ export default function FarmCopilot() {
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
             <Sparkles size={16} className="text-emerald-400" />
             <p style={{ fontSize: 12, fontWeight: 800, color: "var(--emerald-400)", margin: 0, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-              Expert Recommendation
+              {t("copilotExpertLabel")}
             </p>
           </div>
           <div

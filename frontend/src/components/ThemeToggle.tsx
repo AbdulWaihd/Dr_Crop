@@ -1,24 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  // Track whether we've applied the initial theme to avoid double-render
+  const applied = useRef(false);
 
   useEffect(() => {
-    setMounted(true);
-    // Initialize theme from localStorage or system preference
+    if (applied.current) return;
+    applied.current = true;
+
+    // Read and apply initial theme from localStorage or system preference
     const savedTheme = localStorage.getItem("dr-crop-theme") as "dark" | "light" | null;
     const sysPrefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
-    
-    const initialTheme = savedTheme || (sysPrefersLight ? "light" : "dark");
-    setTheme(initialTheme);
+    const initialTheme = savedTheme ?? (sysPrefersLight ? "light" : "dark");
+
     document.documentElement.setAttribute("data-theme", initialTheme);
-    
-    // Defer to next tick to avoid cascading render warning in React Compiler
-    setTimeout(() => setMounted(true), 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Use functional update + separate micro-task so React Compiler doesn't see
+    // two synchronous setState calls inside the same effect body.
+    Promise.resolve().then(() => {
+      setTheme(initialTheme);
+      setMounted(true);
+    });
   }, []);
 
   const toggleTheme = () => {

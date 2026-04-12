@@ -11,6 +11,12 @@ from PIL import Image
 
 from app.config import get_settings
 from app.services.exa_service import _fallback_diagnosis_rag, search_diagnosis_rag
+from app.services.gemini_client import (
+    gemini_generate_text,
+    gemini_generate_vision,
+    gemini_http_error_message,
+    use_gemini_key,
+)
 
 MAX_IMAGE_EDGE = 1280
 JPEG_QUALITY = 88
@@ -90,33 +96,51 @@ async def extract_visual_dimensions(image: Image.Image) -> dict[str, Any]:
         "Follow the JSON schema in the system instructions exactly."
     )
 
-    payload = {
-        "model": settings.vision_model,
-        "messages": [
-            {"role": "system", "content": VISION_SYSTEM},
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": user_text},
-                    {"type": "image_url", "image_url": {"url": data_url}},
-                ],
-            },
-        ],
-        "temperature": 0.2,
-        "max_tokens": 1200,
-    }
-
     try:
-        async with httpx.AsyncClient(timeout=90) as client:
-            resp = await client.post(
-                f"{settings.llm_base_url}/chat/completions",
-                headers={"Authorization": f"Bearer {settings.llm_api_key}"},
-                json=payload,
+        if use_gemini_key(settings.llm_api_key):
+            if "," not in data_url:
+                raise RuntimeError("Invalid image data URL for Gemini.")
+            raw_b64 = data_url.split(",", 1)[1]
+            content = await gemini_generate_vision(
+                settings.llm_api_key.strip(),
+                settings.vision_model,
+                system_instruction=VISION_SYSTEM,
+                user_text=user_text,
+                image_mime="image/jpeg",
+                image_base64=raw_b64,
+                temperature=0.2,
+                max_output_tokens=1200,
             )
-            resp.raise_for_status()
-            content = resp.json()["choices"][0]["message"]["content"]
+        else:
+            payload = {
+                "model": settings.vision_model,
+                "messages": [
+                    {"role": "system", "content": VISION_SYSTEM},
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": user_text},
+                            {"type": "image_url", "image_url": {"url": data_url}},
+                        ],
+                    },
+                ],
+                "temperature": 0.2,
+                "max_tokens": 1200,
+            }
+            async with httpx.AsyncClient(timeout=90) as client:
+                resp = await client.post(
+                    f"{settings.llm_base_url}/chat/completions",
+                    headers={"Authorization": f"Bearer {settings.llm_api_key}"},
+                    json=payload,
+                )
+                resp.raise_for_status()
+                content = resp.json()["choices"][0]["message"]["content"]
     except httpx.HTTPStatusError as e:
-        msg = _openai_error_message(e.response)
+        msg = (
+            gemini_http_error_message(e)
+            if use_gemini_key(settings.llm_api_key)
+            else _openai_error_message(e.response)
+        )
         raise RuntimeError(
             f"Vision API HTTP {e.response.status_code}: {msg or e!s}. "
             "Check LLM_API_KEY, billing, and that VISION_MODEL supports images."
@@ -147,24 +171,38 @@ async def synthesize_diagnosis(
     )
 
     try:
-        async with httpx.AsyncClient(timeout=60) as client:
-            resp = await client.post(
-                f"{settings.llm_base_url}/chat/completions",
-                headers={"Authorization": f"Bearer {settings.llm_api_key}"},
-                json={
-                    "model": settings.llm_model,
-                    "messages": [
-                        {"role": "system", "content": SYNTHESIS_SYSTEM},
-                        {"role": "user", "content": user_prompt},
-                    ],
-                    "temperature": 0.15,
-                    "max_tokens": 500,
-                },
+        if use_gemini_key(settings.llm_api_key):
+            content = await gemini_generate_text(
+                settings.llm_api_key.strip(),
+                settings.llm_model,
+                system_instruction=SYNTHESIS_SYSTEM,
+                user_text=user_prompt,
+                temperature=0.15,
+                max_output_tokens=1024,
             )
-            resp.raise_for_status()
-            content = resp.json()["choices"][0]["message"]["content"]
+        else:
+            async with httpx.AsyncClient(timeout=60) as client:
+                resp = await client.post(
+                    f"{settings.llm_base_url}/chat/completions",
+                    headers={"Authorization": f"Bearer {settings.llm_api_key}"},
+                    json={
+                        "model": settings.llm_model,
+                        "messages": [
+                            {"role": "system", "content": SYNTHESIS_SYSTEM},
+                            {"role": "user", "content": user_prompt},
+                        ],
+                        "temperature": 0.15,
+                        "max_tokens": 500,
+                    },
+                )
+                resp.raise_for_status()
+                content = resp.json()["choices"][0]["message"]["content"]
     except httpx.HTTPStatusError as e:
-        msg = _openai_error_message(e.response)
+        msg = (
+            gemini_http_error_message(e)
+            if use_gemini_key(settings.llm_api_key)
+            else _openai_error_message(e.response)
+        )
         raise RuntimeError(
             f"Synthesis API HTTP {e.response.status_code}: {msg or e!s}"
         ) from e

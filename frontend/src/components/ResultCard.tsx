@@ -17,7 +17,6 @@ import {
   Wind, 
   Thermometer, 
   Droplets, 
-  Copy, 
   RotateCcw, 
   Info,
   Waves,

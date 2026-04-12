@@ -168,6 +168,7 @@ const messagesEn = {
   copilotThinking: "Thinking…",
   copilotError: "Could not get advice. Check your connection or try again.",
   copilotOffline: "The assistant needs the API key on the server. Ask your support person to set LLM_API_KEY in backend/.env.",
+  copilotNeedQuestion: "Type your farming question in the box above, then tap Get advice.",
 
   copilotVoiceStart: "Voice",
   copilotVoiceStop: "Stop",
@@ -180,6 +181,7 @@ const messagesEn = {
   copilotVoiceNetwork: "Voice needs internet (browser sends audio to recognition servers). Check Wi‑Fi or mobile data.",
   copilotVoiceMic: "No microphone found, or it is busy in another app. Check your device settings.",
   copilotVoiceStartFail: "Could not start listening. Close other tabs using the mic and try again.",
+  copilotExpertLabel: "Expert Recommendation",
 } as const;
 
 const messagesHi: Record<MessageKey, string> = {
@@ -320,6 +322,7 @@ const messagesHi: Record<MessageKey, string> = {
   copilotThinking: "सोच रहा है…",
   copilotError: "सलाह नहीं मिली। इंटरनेट जाँचें या फिर कोशिश करें।",
   copilotOffline: "सहायक के लिए सर्वर पर API कुंजी चाहिए। backend/.env में LLM_API_KEY लगवाएँ।",
+  copilotNeedQuestion: "ऊपर बॉक्स में अपना सवाल लिखें, फिर सलाह लें पर टैप करें।",
 
   copilotVoiceStart: "आवाज़",
   copilotVoiceStop: "रोकें",
@@ -332,6 +335,7 @@ const messagesHi: Record<MessageKey, string> = {
   copilotVoiceNetwork: "आवाज़ के लिए इंटरनेट चाहिए। Wi‑Fi या मोबाइल डेटा चेक करें।",
   copilotVoiceMic: "माइक नहीं मिला या दूसरे ऐप में व्यस्त है। डिवाइस सेटिंग देखें।",
   copilotVoiceStartFail: "सुनना शुरू नहीं हो सका। दूसरे टैब बंद करके फिर कोशिश करें।",
+  copilotExpertLabel: "विशेषज्ञ सलाह",
 };
 
 const messagesUr: Record<MessageKey, string> = {
@@ -472,6 +476,7 @@ const messagesUr: Record<MessageKey, string> = {
   copilotThinking: "سوچ رہا ہے…",
   copilotError: "مشورہ نہیں ملا۔ انٹرنیٹ چیک کریں یا دوبارہ کوشش کریں۔",
   copilotOffline: "معاون کے لیے سرور پر API کلید درکار ہے۔ backend/.env میں LLM_API_KEY لگوائیں۔",
+  copilotNeedQuestion: "اوپر والے خانے میں سوال لکھیں، پھر مشورہ لیں دبائیں۔",
 
   copilotVoiceStart: "آواز",
   copilotVoiceStop: "روکیں",
@@ -484,6 +489,7 @@ const messagesUr: Record<MessageKey, string> = {
   copilotVoiceNetwork: "آواز کے لیے انٹرنیٹ درکار ہے۔ Wi‑Fi یا ڈیٹا چیک کریں۔",
   copilotVoiceMic: "مائک نہیں ملا یا دوسری ایپ میں مصروف ہے۔ سیٹنگ دیکھیں۔",
   copilotVoiceStartFail: "سننا شروع نہیں ہوا۔ دوسرے ٹیب بند کر کے دوبارہ کوشش کریں۔",
+  copilotExpertLabel: "ماہر مشورہ",
 };
 
 export const messages: Record<Locale, Record<MessageKey, string>> = {

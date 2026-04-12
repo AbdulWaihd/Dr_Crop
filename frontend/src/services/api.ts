@@ -20,7 +20,8 @@ function coordsPayload(coords?: { latitude: number; longitude: number } | null) 
 
 export async function predictDisease(
   file: File,
-  coords?: { latitude: number; longitude: number } | null
+  coords?: { latitude: number; longitude: number } | null,
+  locale: Locale = "en"
 ): Promise<FullDiagnosisResponse> {
   const formData = new FormData();
   formData.append("file", file);
@@ -48,12 +49,23 @@ export async function predictDisease(
 
   const prediction: PredictionResult = await predRes.json();
 
+  const recommendation = await fetchRecommendation(prediction, coords, locale);
+
+  return { prediction, recommendation };
+}
+
+export async function fetchRecommendation(
+  prediction: { disease: string; crop: string },
+  coords?: { latitude: number; longitude: number } | null,
+  locale: Locale = "en"
+): Promise<Recommendation> {
   const recRes = await fetch(`${API_BASE}/recommend`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       disease: prediction.disease,
       crop: prediction.crop,
+      locale,
       ...coordsPayload(coords),
     }),
   });
@@ -77,7 +89,7 @@ export async function predictDisease(
     };
   }
 
-  return { prediction, recommendation };
+  return recommendation;
 }
 
 export async function askFarmCopilot(question: string, locale: Locale): Promise<string> {

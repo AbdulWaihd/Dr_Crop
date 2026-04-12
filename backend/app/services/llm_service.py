@@ -1,8 +1,11 @@
 import json
+import re
+from typing import Any
 
 import httpx
 
 from app.config import get_settings
+from app.services.gemini_client import gemini_generate_text, use_gemini_key
 from app.models.schemas import AirQuality
 
 SYSTEM_PROMPT = """\
@@ -46,6 +49,20 @@ RECOMMEND_KEYS = (
     "yield_uplift_comparison",
 )
 
+_RECOMMEND_LANG: dict[str, str] = {
+    "en": "Write every field of the JSON response in English.",
+    "hi": "CRITICAL RULE: Write EVERY SINGLE FIELD of the JSON response entirely in Hindi (Devanagari script). DO NOT include any English text, words, or headings (like 'Expert Recommendation') inside the fields. Translate everything.",
+    "ur": "CRITICAL RULE: Write EVERY SINGLE FIELD of the JSON response entirely in Urdu (Arabic/Nastaliq script). DO NOT include any English text, words, or headings (like 'Expert Recommendation') inside the fields. Translate everything.",
+}
+
+
+def _parse_json_object(text: str) -> dict[str, Any]:
+    text = text.strip()
+    m = re.search(r"\{[\s\S]*\}", text)
+    if not m:
+        raise ValueError("No JSON object in model response")
+    return json.loads(m.group())
+
 
 async def generate_recommendation(
     context: str,
@@ -53,12 +70,13 @@ async def generate_recommendation(
     crop: str,
     field_context: str = "",
     air_quality: AirQuality | None = None,
+    locale: str = "en",
 ) -> dict[str, str]:
     """Call an OpenAI-compatible LLM to generate structured treatment and yield advice."""
     settings = get_settings()
 
     if not settings.llm_api_key:
-        return _fallback_recommendation(disease, crop, field_context, air_quality)
+        return _fallback_recommendation(disease, crop, field_context, air_quality, locale)
 
     field_block = (
         f"\n\nField context (weather/soil and/or air quality model estimates):\n{field_context}\n"
@@ -66,34 +84,46 @@ async def generate_recommendation(
         else "\n\nField weather/soil/air: not provided — give general best-practice yield and air-aware advice.\n"
     )
 
+    lang_instruction = _RECOMMEND_LANG.get(locale, _RECOMMEND_LANG["en"])
     user_prompt = (
+        f"Language instruction: {lang_instruction}\n\n"
         f"Crop: {crop}\nDisease / condition: {disease}\n\n"
         f"Research context:\n{context}\n"
         f"{field_block}"
         f"Respond with the JSON object using these keys: {', '.join(RECOMMEND_KEYS)}."
     )
 
-    async with httpx.AsyncClient(timeout=45) as client:
-        resp = await client.post(
-            f"{settings.llm_base_url}/chat/completions",
-            headers={"Authorization": f"Bearer {settings.llm_api_key}"},
-            json={
-                "model": settings.llm_model,
-                "messages": [
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": user_prompt},
-                ],
-                "temperature": 0.3,
-            },
+    if use_gemini_key(settings.llm_api_key):
+        content = await gemini_generate_text(
+            settings.llm_api_key.strip(),
+            settings.llm_model,
+            system_instruction=SYSTEM_PROMPT,
+            user_text=user_prompt,
+            temperature=0.3,
+            max_output_tokens=8192,
         )
-        resp.raise_for_status()
-        content = resp.json()["choices"][0]["message"]["content"]
+    else:
+        async with httpx.AsyncClient(timeout=45) as client:
+            resp = await client.post(
+                f"{settings.llm_base_url}/chat/completions",
+                headers={"Authorization": f"Bearer {settings.llm_api_key}"},
+                json={
+                    "model": settings.llm_model,
+                    "messages": [
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    "temperature": 0.3,
+                },
+            )
+            resp.raise_for_status()
+            content = resp.json()["choices"][0]["message"]["content"]
 
     try:
-        raw = json.loads(content)
-        return _merge_with_fallback(raw, disease, crop, field_context, air_quality)
-    except json.JSONDecodeError:
-        return _fallback_recommendation(disease, crop, field_context, air_quality)
+        raw = _parse_json_object(content)
+        return _merge_with_fallback(raw, disease, crop, field_context, air_quality, locale)
+    except (json.JSONDecodeError, ValueError):
+        return _fallback_recommendation(disease, crop, field_context, air_quality, locale)
 
 
 def _merge_with_fallback(
@@ -102,8 +132,9 @@ def _merge_with_fallback(
     crop: str,
     field_context: str,
     air_quality: AirQuality | None,
+    locale: str = "en",
 ) -> dict[str, str]:
-    out = _fallback_recommendation(disease, crop, field_context, air_quality)
+    out = _fallback_recommendation(disease, crop, field_context, air_quality, locale)
     for key in RECOMMEND_KEYS:
         val = raw.get(key)
         if isinstance(val, str) and val.strip():
@@ -180,6 +211,7 @@ def _fallback_recommendation(
     crop: str,
     field: str = "",
     air_quality: AirQuality | None = None,
+    locale: str = "en",
 ) -> dict[str, str]:
     agro_hint = (
         " Tailor irrigation to soil moisture and rainfall when you have local readings."
@@ -219,19 +251,22 @@ def _fallback_recommendation(
     }
 
 
-COPILOT_SYSTEM = """You are a warm, respectful farming copilot for smallholders and rural farmers \
+COPILOT_SYSTEM_BASE = """You are a warm, respectful farming copilot for smallholders and rural farmers \
 (including areas with limited connectivity or formal extension). \
 Use simple, everyday language. Short sentences. If you must use a technical term, add one plain-language line. \
 Never talk down to the farmer. Give practical steps they can try soon. \
 If the question is unclear, end with one short clarifying question. \
 Topics: crops, soil, water, pests, diseases (general), weather, storage, nutrients, organic options, safe chemical use. \
 Do not invent government scheme amounts, dates, or subsidies — say the farmer should confirm with local extension / Krishi Kendra. \
-Keep the reply under about 350 words unless a short numbered list is clearly better."""
+Keep the reply under about 350 words unless a short numbered list is clearly better.
 
-_COPILOT_REPLY_LANG = {
-    "en": "English only.",
-    "hi": "Hindi only, using Devanagari script.",
-    "ur": "Urdu only, using Arabic script.",
+IMPORTANT — LANGUAGE RULE (highest priority, override everything else): {lang_rule} \
+Even if the farmer writes in a different language, you MUST reply in {lang_name} only. No exceptions."""
+
+_COPILOT_LANG_META: dict[str, dict[str, str]] = {
+    "en": {"rule": "Reply ONLY in English.", "name": "English"},
+    "hi": {"rule": "CRITICAL RULE: You MUST reply entirely in Hindi using Devanagari script. DO NOT output any English text, headings (like 'Expert Recommendation'), or words. Translate everything to Hindi.", "name": "Hindi (हिन्दी)"},
+    "ur": {"rule": "CRITICAL RULE: You MUST reply entirely in Urdu using Arabic/Nastaliq script. DO NOT output any English text, headings (like 'Expert Recommendation'), or words. Translate everything to Urdu.", "name": "Urdu (اردو)"},
 }
 
 
@@ -241,8 +276,24 @@ async def generate_copilot_answer(question: str, locale: str) -> str:
     if not settings.llm_api_key:
         return _copilot_fallback_no_key(locale)
 
-    lang_line = _COPILOT_REPLY_LANG.get(locale, _COPILOT_REPLY_LANG["en"])
-    user_content = f"{lang_line}\n\nFarmer's question:\n{question.strip()}"
+    meta = _COPILOT_LANG_META.get(locale, _COPILOT_LANG_META["en"])
+    system_prompt = COPILOT_SYSTEM_BASE.format(
+        lang_rule=meta["rule"],
+        lang_name=meta["name"],
+    )
+    user_content = f"Farmer's question:\n{question.strip()}"
+
+    if use_gemini_key(settings.llm_api_key):
+        return (
+            await gemini_generate_text(
+                settings.llm_api_key.strip(),
+                settings.llm_model,
+                system_instruction=system_prompt,
+                user_text=user_content,
+                temperature=0.4,
+                max_output_tokens=8192,
+            )
+        ).strip()
 
     async with httpx.AsyncClient(timeout=60) as client:
         resp = await client.post(
@@ -251,7 +302,7 @@ async def generate_copilot_answer(question: str, locale: str) -> str:
             json={
                 "model": settings.llm_model,
                 "messages": [
-                    {"role": "system", "content": COPILOT_SYSTEM},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_content},
                 ],
                 "temperature": 0.4,

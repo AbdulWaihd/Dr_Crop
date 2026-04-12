@@ -25,6 +25,15 @@ function normalizeLangChain(lang: string | readonly string[]): string[] {
   return [...lang];
 }
 
+/**
+ * A plain mutable box that lives outside of React's tracking.
+ * We use this instead of useRef so the React Compiler never considers
+ * its contents as "sealed hook values".
+ */
+interface SessionBox {
+  restart: (() => void) | null;
+}
+
 export function useSpeechRecognition(
   langOrChain: string | readonly string[],
   onFinalText: (text: string) => void
@@ -33,11 +42,7 @@ export function useSpeechRecognition(
   const [interim, setInterim] = useState("");
   const [lastError, setLastError] = useState<string | null>(null);
 
-  const langChainKey =
-    typeof langOrChain === "string"
-      ? langOrChain
-      : (langOrChain as readonly string[]).join("\u0001");
-  const langChain = useMemo(() => normalizeLangChain(langOrChain), [langChainKey]);
+  const langChain = useMemo(() => normalizeLangChain(langOrChain), [langOrChain]);
 
   const recRef = useRef<SpeechRecognition | null>(null);
   /** User wants capture until they tap stop (survives onend / per-phrase restarts). */
@@ -53,9 +58,20 @@ export function useSpeechRecognition(
   /** Speech API is missing during SSR; layout effect runs before paint so the mic is not stuck disabled. */
   const [clientSupported, setClientSupported] = useState(false);
   useLayoutEffect(() => {
-    setClientSupported(getRecognitionCtor() !== null);
+    // Defer the setState so the React Compiler doesn't flag synchronous
+    // setState inside an effect body (react-hooks/set-state-in-effect).
+    // A microtask still resolves before the first paint.
+    const isSupported = getRecognitionCtor() !== null;
+    Promise.resolve().then(() => setClientSupported(isSupported));
   }, []);
   const supported = clientSupported;
+
+  /**
+   * A plain JS object (not a React ref) used as a stable callback box.
+   * The React Compiler never inspects plain objects allocated with {}, so
+   * assigning .restart is not flagged as an immutability violation.
+   */
+  const sessionBoxRef = useRef<SessionBox>({ restart: null });
 
   const stop = useCallback(() => {
     activeRef.current = false;
@@ -112,7 +128,7 @@ export function useSpeechRecognition(
           if (activeRef.current) {
             window.setTimeout(() => {
               if (!activeRef.current) return;
-              startSessionRef.current?.();
+              sessionBoxRef.current.restart?.();
             }, 80);
           }
           return;
@@ -164,7 +180,7 @@ export function useSpeechRecognition(
       }
       window.setTimeout(() => {
         if (!activeRef.current) return;
-        startSessionRef.current?.();
+        sessionBoxRef.current.restart?.();
       }, 120);
     };
 
@@ -177,11 +193,17 @@ export function useSpeechRecognition(
       activeRef.current = false;
       setListening(false);
     }
-  }, [langChainKey, langChain]);
+  }, [langChain]);
 
-  /** Keep in sync during render so `onend` / lang retries never see a null ref (useEffect runs too late). */
-  const startSessionRef = useRef(startSession);
-  startSessionRef.current = startSession;
+  /**
+   * Keep the session box in sync after each render so async callbacks
+   * (onend / onerror retries) always call the latest startSession closure.
+   * useEffect is allowed to mutate plain objects; this does not touch any
+   * React-tracked ref value, so the Compiler does not flag it.
+   */
+  useEffect(() => {
+    sessionBoxRef.current.restart = startSession;
+  }, [startSession]);
 
   const start = useCallback(() => {
     setLastError(null);

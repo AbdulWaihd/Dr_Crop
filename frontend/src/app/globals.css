@@ -130,10 +130,17 @@ body {
   overflow: hidden;
 }
 
+.btn-primary > * {
+  position: relative;
+  z-index: 1;
+}
+
 .btn-primary::before {
   content: '';
   position: absolute;
   inset: 0;
+  z-index: 0;
+  pointer-events: none;
   background: linear-gradient(135deg, rgba(255,255,255,0.08), transparent);
   opacity: 0;
   transition: opacity 0.2s;

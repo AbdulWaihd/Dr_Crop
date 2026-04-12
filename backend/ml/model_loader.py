@@ -4,12 +4,11 @@ Model loader — swap the placeholder for a real trained model.
 Supported approach:
   1. Fine-tuned ResNet/EfficientNet on PlantVillage dataset
   2. Drop a .pth file into /backend/ml/ and update CLASS_NAMES
-"""
 
-import torch
-import torch.nn as nn
-from torchvision import models
-from functools import lru_cache
+NOTE: torch/torchvision are optional dependencies.
+The production /predict route uses a vision LLM (see app/services/vision_diagnosis_service.py).
+This module is only used by ml/inference.py for offline/local experiments.
+"""
 
 CLASS_NAMES: list[str] = [
     "Tomato__Early_Blight",
@@ -28,29 +27,44 @@ CLASS_NAMES: list[str] = [
 
 NUM_CLASSES = len(CLASS_NAMES)
 
+try:
+    import torch
+    import torch.nn as nn
+    from torchvision import models
+    from functools import lru_cache
 
-def _build_model() -> nn.Module:
-    """Build a ResNet-18 with the correct output head."""
-    model = models.resnet18(weights=None)
-    model.fc = nn.Linear(model.fc.in_features, NUM_CLASSES)
-    return model
+    def _build_model() -> nn.Module:
+        """Build a ResNet-18 with the correct output head."""
+        model = models.resnet18(weights=None)
+        model.fc = nn.Linear(model.fc.in_features, NUM_CLASSES)
+        return model
 
+    @lru_cache(maxsize=1)
+    def load_model(model_path: str | None = None) -> nn.Module:
+        """
+        Load model weights from disk. Falls back to random-init placeholder
+        if no checkpoint exists (sufficient for demo/hackathon).
+        """
+        model = _build_model()
 
-@lru_cache(maxsize=1)
-def load_model(model_path: str | None = None) -> nn.Module:
-    """
-    Load model weights from disk. Falls back to random-init placeholder
-    if no checkpoint exists (sufficient for demo/hackathon).
-    """
-    model = _build_model()
+        if model_path:
+            try:
+                state = torch.load(model_path, map_location="cpu", weights_only=True)
+                model.load_state_dict(state)
+                print(f"[ML] Loaded weights from {model_path}")
+            except FileNotFoundError:
+                print("[ML] No checkpoint found — using random-init placeholder model")
 
-    if model_path:
-        try:
-            state = torch.load(model_path, map_location="cpu", weights_only=True)
-            model.load_state_dict(state)
-            print(f"[ML] Loaded weights from {model_path}")
-        except FileNotFoundError:
-            print("[ML] No checkpoint found — using random-init placeholder model")
+        model.eval()
+        return model
 
-    model.eval()
-    return model
+    TORCH_AVAILABLE = True
+
+except ImportError:
+    TORCH_AVAILABLE = False
+
+    def load_model(model_path: str | None = None):  # type: ignore[misc]
+        raise RuntimeError(
+            "torch is not installed. Install it to use local ResNet inference. "
+            "The production /predict route uses the vision LLM and does not need torch."
+        )

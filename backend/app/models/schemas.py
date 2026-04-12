@@ -43,6 +43,7 @@ class RecommendRequest(BaseModel):
     crop: str
     latitude: float | None = None
     longitude: float | None = None
+    locale: Literal["en", "hi", "ur"] = "en"
 
     @model_validator(mode="after")
     def lat_lon_together(self):

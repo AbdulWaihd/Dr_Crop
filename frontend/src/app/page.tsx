@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Eye, 
   Search, 
@@ -20,7 +20,7 @@ import ResultCard from "@/components/ResultCard";
 import WeatherLocationPicker, { type WeatherLocMode } from "@/components/WeatherLocationPicker";
 import Header from "@/components/Header";
 import { useLocale } from "@/contexts/LocaleContext";
-import { predictDisease } from "@/services/api";
+import { predictDisease, fetchRecommendation } from "@/services/api";
 import type { PredictionResult, Recommendation } from "@/lib/types";
 
 function getFieldCoords(): Promise<{
@@ -61,7 +61,7 @@ function parseManualCoords(latStr: string, lonStr: string): ManualParse {
 }
 
 export default function HomePage() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PredictionResult | null>(null);
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
@@ -75,6 +75,25 @@ export default function HomePage() {
   const [lastGeo, setLastGeo] = useState<{ lat: number; lon: number } | null>(null);
   const [geoFailed, setGeoFailed] = useState(false);
   const [lastGeoSource, setLastGeoSource] = useState<"gps" | "manual" | null>(null);
+
+  // Re-fetch recommendation when locale changes so it dynamically translates
+  useEffect(() => {
+    if (result && !loading) {
+      async function retranslateInfo() {
+        setLoading(true);
+        try {
+          const coordsObj = lastGeo ? { latitude: lastGeo.lat, longitude: lastGeo.lon } : null;
+          const rec = await fetchRecommendation(result!, coordsObj, locale);
+          setRecommendation(rec);
+        } catch (e) {
+          // ignore error for locale change
+        } finally {
+          setLoading(false);
+        }
+      }
+      retranslateInfo();
+    }
+  }, [locale]); // Intentionally omitting `result` and `lastGeo` to prevent repeated calls
 
   const handleImageSelected = async (file: File) => {
     setLoading(true);
@@ -112,7 +131,7 @@ export default function HomePage() {
       }
 
       setLastGeoSource(source);
-      const data = await predictDisease(file, coords);
+      const data = await predictDisease(file, coords, locale);
       setResult(data.prediction);
       setRecommendation(data.recommendation);
     } catch (err) {
@@ -273,6 +292,15 @@ export default function HomePage() {
                   >
                     <MapPin size={14} className="text-emerald-400" /> {t("geoNotice")}
                   </p>
+                  <WeatherLocationPicker
+                    mode={weatherMode}
+                    onModeChange={setWeatherMode}
+                    manualLat={manualLat}
+                    manualLon={manualLon}
+                    onManualLat={setManualLat}
+                    onManualLon={setManualLon}
+                    disabled={loading}
+                  />
                   <ImageUploader
                     onImageSelected={handleImageSelected}
                     loading={loading}

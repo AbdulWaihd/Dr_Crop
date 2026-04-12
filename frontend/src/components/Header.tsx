@@ -1,3 +1,5 @@
+"use client";
+
 import { useLocale } from "@/contexts/LocaleContext";
 import { LOCALES, type Locale } from "@/lib/i18n";
 import { Sprout, Activity } from "lucide-react";

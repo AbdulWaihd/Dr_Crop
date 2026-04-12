@@ -42,7 +42,7 @@ async def get_recommendation(req: RecommendRequest):
     field_context = "\n\n".join(blocks)
 
     rec = await generate_recommendation(
-        context, req.disease, req.crop, field_context, air_quality
+        context, req.disease, req.crop, field_context, air_quality, req.locale
     )
 
     return RecommendResponse(
