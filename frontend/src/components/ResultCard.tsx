@@ -24,8 +24,12 @@ import {
   Dna,
   Share2,
   Activity,
-  Sprout
+  Sprout,
+  Loader2,
+  Download
 } from "lucide-react";
+import { downloadPdfFromHtml } from "@/lib/downloadPdf";
+import { generateReportHtml } from "@/lib/pdfGenerator";
 
 interface Props {
   prediction: PredictionResult;
@@ -70,6 +74,7 @@ export default function ResultCard({
   const isHealthy = prediction.disease.toLowerCase().includes("healthy");
   const [activeTab, setActiveTab] = useState<"treatment" | "prevention" | "fertilizer">("treatment");
   const [copied, setCopied] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const fc = recommendation?.field_conditions;
   const hasField =
@@ -128,6 +133,39 @@ export default function ResultCard({
     navigator.clipboard.writeText(lines.join("\n"));
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleDownloadPdf = async () => {
+    setIsDownloading(true);
+    try {
+      let html = "";
+      html += `<strong>${t("cropType")}:</strong> ${prediction.crop}<br/>`;
+      html += `<strong>${t("condition")}:</strong> ${isHealthy ? t("noDisease") : prediction.disease}<br/>`;
+      html += `<strong>${t("confidenceLabel")}:</strong> ${confidencePercent}%<br/><br/>`;
+      
+      if (geo?.coords) {
+        html += `<strong>Location:</strong> ${t("geoLatLon", { lat: geo.coords.lat.toFixed(2), lon: geo.coords.lon.toFixed(2) })} (${geo.source === "manual" ? t("geoSourceManual") : t("geoSourceGps")})<br/><br/>`;
+      }
+      
+      if (recommendation && !isHealthy) {
+        html += `<h3 style="color:#10B981; margin-bottom: 4px;">${t("tabTreatment")}</h3><p>${recommendation.treatment}</p>`;
+        html += `<h3 style="color:#10B981; margin-bottom: 4px;">${t("tabPrevention")}</h3><p>${recommendation.prevention}</p>`;
+        html += `<h3 style="color:#10B981; margin-bottom: 4px;">${t("tabFertilizer")}</h3><p>${recommendation.fertilizer}</p>`;
+      }
+      
+      if (recommendation && (hasYieldPlan || nonEmpty(yA))) {
+        html += `<hr style="border:0; border-bottom: 1px solid #E5E7EB; margin: 20px 0;" />`;
+        html += `<h3 style="color:#1F2937;">Precision Agriculture Advice</h3>`;
+        if (nonEmpty(yI)) html += `<p><strong>${t("yieldWater") || "Irrigation"}:</strong><br/>${yI}</p>`;
+        if (nonEmpty(yS)) html += `<p><strong>${t("yieldSoil") || "Soil Health"}:</strong><br/>${yS}</p>`;
+        if (nonEmpty(yC)) html += `<p><strong>${t("yieldCrop") || "Crop Practices"}:</strong><br/>${yC}</p>`;
+        if (nonEmpty(yA)) html += `<p><strong>${t("airAdviceTitle") || "Air Quality"}:</strong><br/>${yA}</p>`;
+      }
+
+      await downloadPdfFromHtml(generateReportHtml("Diagnosis & Recommendation Report", html), "DrCrop-Diagnosis-Report.pdf");
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const severityColor =
@@ -381,9 +419,14 @@ export default function ResultCard({
           <RotateCcw size={20} />
           {t("scanAnother")}
         </button>
-        <button id="btn-copy-report" type="button" onClick={handleCopyReport} className="btn-ghost" style={{ flex: 1, height: 56 }}>
-          {copied ? <><CheckCircle size={18} /> {t("copied")}</> : <><Share2 size={18} /> {t("copyReport")}</>}
-        </button>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+          <button id="btn-copy-report" type="button" onClick={handleCopyReport} className="btn-ghost" style={{ flex: 1, minHeight: 48 }}>
+            {copied ? <><CheckCircle size={18} /> {t("copied")}</> : <><Share2 size={18} /> {t("copyReport")}</>}
+          </button>
+          <button id="btn-download-pdf" type="button" onClick={handleDownloadPdf} disabled={isDownloading} className="btn-secondary" style={{ flex: 1, minHeight: 48, background: "rgba(16,185,129,0.1)", color: "var(--emerald-500)", border: "1px solid rgba(16,185,129,0.3)" }}>
+            {isDownloading ? <><Loader2 size={18} className="animate-spin" /> ...</> : <><Download size={18} /> PDF</>}
+          </button>
+        </div>
       </div>
     </div>
   );

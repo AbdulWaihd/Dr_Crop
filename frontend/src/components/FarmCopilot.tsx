@@ -12,8 +12,11 @@ import {
   Send, 
   Loader2, 
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  Download
 } from "lucide-react";
+import { downloadPdfFromHtml } from "@/lib/downloadPdf";
+import { generateReportHtml } from "@/lib/pdfGenerator";
 
 export default function FarmCopilot() {
   const { t, locale, isRtl } = useLocale();
@@ -21,6 +24,7 @@ export default function FarmCopilot() {
   const [answer, setAnswer] = useState<string | null>(null);
   const [lastAsked, setLastAsked] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const appendVoice = useCallback((chunk: string) => {
@@ -106,6 +110,17 @@ export default function FarmCopilot() {
   const onVoiceClick = () => {
     clearError();
     toggle();
+  };
+
+  const downloadReport = async () => {
+    if (!answer || !lastAsked) return;
+    setIsDownloading(true);
+    try {
+      const htmlContent = `<strong>Question:</strong><br/>${lastAsked}<br/><br/><strong>Response:</strong><br/>${answer}`;
+      await downloadPdfFromHtml(generateReportHtml("Farm Copilot Report", htmlContent), "DrCrop-Copilot-Report.pdf");
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -259,6 +274,17 @@ export default function FarmCopilot() {
             <p style={{ fontSize: 12, fontWeight: 800, color: "var(--emerald-400)", margin: 0, textTransform: "uppercase", letterSpacing: "0.1em" }}>
               {t("copilotExpertLabel")}
             </p>
+            <button
+              onClick={downloadReport}
+              disabled={isDownloading}
+              type="button"
+              className="btn-ghost"
+              style={{ marginInlineStart: "auto", fontSize: 12, padding: "4px 10px", gap: 6, color: "var(--emerald-500)", border: "1px solid rgba(16,185,129,0.3)" }}
+              title="Download PDF"
+            >
+              {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+              PDF
+            </button>
           </div>
           <div
             dir={isRtl ? "rtl" : "ltr"}
