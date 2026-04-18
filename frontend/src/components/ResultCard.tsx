@@ -68,7 +68,7 @@ export default function ResultCard({
   preview,
   geo,
 }: Props) {
-  const { t } = useLocale();
+  const { t, isRtl } = useLocale();
 
   const confidencePercent = Math.round(prediction.confidence * 100);
   const isHealthy = prediction.disease.toLowerCase().includes("healthy");
@@ -97,7 +97,7 @@ export default function ResultCard({
 
   const handleCopyReport = () => {
     const lines = [
-      `Dr. Crop Analysis Report`,
+      `drCrop Analysis Report`,
       `=======================`,
       `${t("cropType")}: ${prediction.crop}`,
       `${t("condition")}: ${isHealthy ? t("noDisease") : prediction.disease}`,
@@ -110,25 +110,6 @@ export default function ResultCard({
         0,
         `${t("geoLatLon", { lat: geo.coords.lat.toFixed(2), lon: geo.coords.lon.toFixed(2) })} (${geo.source === "manual" ? t("geoSourceManual") : t("geoSourceGps")})`
       );
-    }
-    if (recommendation && !isHealthy) {
-      lines.push(
-        `[${t("tabTreatment")}]`,
-        `${recommendation.treatment}`,
-        ``,
-        `[${t("tabPrevention")}]`,
-        `${recommendation.prevention}`,
-        ``,
-        `[${t("tabFertilizer")}]`,
-        `${recommendation.fertilizer}`
-      );
-    }
-    if (recommendation && (hasYieldPlan || nonEmpty(yA))) {
-      lines.push(``, `--- Precision Agriculture Advice ---`);
-      if (nonEmpty(yI)) lines.push(`${yI}`, ``);
-      if (nonEmpty(yS)) lines.push(`${yS}`, ``);
-      if (nonEmpty(yC)) lines.push(`${yC}`, ``);
-      if (nonEmpty(yA)) lines.push(`${yA}`);
     }
     navigator.clipboard.writeText(lines.join("\n"));
     setCopied(true);
@@ -144,22 +125,11 @@ export default function ResultCard({
       html += `<strong>${t("confidenceLabel")}:</strong> ${confidencePercent}%<br/><br/>`;
       
       if (geo?.coords) {
-        html += `<strong>Location:</strong> ${t("geoLatLon", { lat: geo.coords.lat.toFixed(2), lon: geo.coords.lon.toFixed(2) })} (${geo.source === "manual" ? t("geoSourceManual") : t("geoSourceGps")})<br/><br/>`;
+        html += `<strong>Location:</strong> ${t("geoLatLon", { lat: geo.coords.lat.toFixed(2), lon: geo.coords.lon.toFixed(2) })}<br/><br/>`;
       }
       
       if (recommendation && !isHealthy) {
-        html += `<h3 style="color:#10B981; margin-bottom: 4px;">${t("tabTreatment")}</h3><p>${recommendation.treatment}</p>`;
-        html += `<h3 style="color:#10B981; margin-bottom: 4px;">${t("tabPrevention")}</h3><p>${recommendation.prevention}</p>`;
-        html += `<h3 style="color:#10B981; margin-bottom: 4px;">${t("tabFertilizer")}</h3><p>${recommendation.fertilizer}</p>`;
-      }
-      
-      if (recommendation && (hasYieldPlan || nonEmpty(yA))) {
-        html += `<hr style="border:0; border-bottom: 1px solid #E5E7EB; margin: 20px 0;" />`;
-        html += `<h3 style="color:#1F2937;">Precision Agriculture Advice</h3>`;
-        if (nonEmpty(yI)) html += `<p><strong>${t("yieldWater") || "Irrigation"}:</strong><br/>${yI}</p>`;
-        if (nonEmpty(yS)) html += `<p><strong>${t("yieldSoil") || "Soil Health"}:</strong><br/>${yS}</p>`;
-        if (nonEmpty(yC)) html += `<p><strong>${t("yieldCrop") || "Crop Practices"}:</strong><br/>${yC}</p>`;
-        if (nonEmpty(yA)) html += `<p><strong>${t("airAdviceTitle") || "Air Quality"}:</strong><br/>${yA}</p>`;
+        html += `<h3 style="color:#1c6d25;">${t("tabTreatment")}</h3><p>${recommendation.treatment}</p>`;
       }
 
       await downloadPdfFromHtml(generateReportHtml("Diagnosis & Recommendation Report", html), "DrCrop-Diagnosis-Report.pdf");
@@ -168,267 +138,163 @@ export default function ResultCard({
     }
   };
 
-  const severityColor =
-    confidencePercent >= 80 ? "var(--danger)" : confidencePercent >= 50 ? "var(--warning)" : "var(--success)";
-
   return (
-    <div className="animate-fade-in-up" style={{ width: "100%", display: "flex", flexDirection: "column", gap: 16 }}>
-      <div className="glass-card" style={{ padding: 24, borderLeft: `4px solid ${isHealthy ? "var(--success)" : "var(--danger)"}` }}>
-        <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
+    <div className="flex flex-col gap-6 animate-fade-in">
+      {/* Primary Diagnosis Card */}
+      <div className={`bg-surface-container-lowest rounded-2xl p-6 border shadow-sm ${isHealthy ? 'border-primary/20' : 'border-error/20'}`}>
+        <div className="flex flex-col md:flex-row gap-6">
           {preview && (
-            <div style={{ position: "relative", width: 88, height: 88, borderRadius: 16, overflow: "hidden", border: "2px solid var(--border-bright)", flexShrink: 0 }}>
-              <Image
-                src={preview}
-                alt="Prediction source"
-                fill
-                className="object-cover"
-                unoptimized
-              />
+            <div className="w-full md:w-48 h-48 rounded-xl overflow-hidden shadow-sm border border-outline-variant/15 relative shrink-0">
+              <Image src={preview} alt="Scan source" fill className="object-cover" unoptimized />
             </div>
           )}
-
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-              <h3 style={{ fontSize: 18, fontWeight: 800, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
-                {t("resultTitle")}
-              </h3>
-              <div className={`badge ${isHealthy ? "badge-success" : "badge-danger"}`} style={{ gap: 6, padding: "6px 14px", borderRadius: 10 }}>
-                {isHealthy ? <CheckCircle size={14} strokeWidth={3} /> : <AlertCircle size={14} strokeWidth={3} />}
+          
+          <div className="flex-1 space-y-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="text-2xl font-bold tracking-tight text-on-surface">{t("resultTitle")}</h3>
+                <p className="text-sm text-on-surface-variant font-medium">Scan ID: #DC-{Date.now().toString().slice(-6)}</p>
+              </div>
+              <div className={`flex items-center gap-2 px-4 py-1.5 rounded-full font-bold text-xs uppercase tracking-wider ${isHealthy ? 'bg-primary-container text-on-primary-container' : 'bg-error-container text-on-error-container'}`}>
+                {isHealthy ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
                 {isHealthy ? t("resultHealthyBadge") : t("resultDiseaseBadge")}
               </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <InfoRow label={t("cropType")} value={prediction.crop} />
-              <InfoRow
-                label={t("condition")}
-                value={isHealthy ? t("noDisease") : prediction.disease}
-                highlight={!isHealthy}
-              />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-surface-container-low rounded-xl border border-outline-variant/10">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">{t("cropType")}</p>
+                <p className="text-lg font-bold text-on-surface">{prediction.crop}</p>
+              </div>
+              <div className="p-4 bg-surface-container-low rounded-xl border border-outline-variant/10">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">{t("condition")}</p>
+                <p className={`text-lg font-bold ${isHealthy ? 'text-primary' : 'text-error'}`}>{isHealthy ? t("noDisease") : prediction.disease}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{t("confidenceLabel")}</p>
+                <p className="text-sm font-black text-primary">{confidencePercent}%</p>
+              </div>
+              <div className="w-full bg-surface-container-low h-2 rounded-full overflow-hidden">
+                <div className="bg-primary h-full transition-all duration-1000" style={{ width: `${confidencePercent}%` }}></div>
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {geo?.coords && (
-          <p style={{ fontSize: 11, color: "var(--emerald-400)", marginTop: 16, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-            <Dna size={12} />
-            {t("geoLatLon", { lat: geo.coords.lat.toFixed(2), lon: geo.coords.lon.toFixed(2) })} — {t("geoStatusUsed")}{" "}
-            ({geo.source === "manual" ? t("geoSourceManual") : t("geoSourceGps")})
-          </p>
+      {/* Location Bar */}
+      {geo?.coords && (
+        <div className="bg-surface-container-high rounded-full px-6 py-2 flex items-center justify-between text-[11px] font-bold border border-outline-variant/15">
+          <div className="flex items-center gap-2 text-primary">
+            <span className="material-symbols-outlined text-[16px]">location_on</span>
+            <span>{t("geoLatLon", { lat: geo.coords.lat.toFixed(4), lon: geo.coords.lon.toFixed(4) })}</span>
+          </div>
+          <div className="text-on-surface-variant uppercase tracking-widest">
+            {geo.source === "manual" ? t("geoSourceManual") : t("geoSourceGps")}
+          </div>
+        </div>
+      )}
+
+      {/* Precision Metrics Bento */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {hasField && fc && (
+          <div className="bg-surface-container-lowest rounded-2xl p-5 border border-outline-variant/15 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <Thermometer size={18} className="text-primary" />
+              <h4 className="text-sm font-bold text-on-surface uppercase tracking-tight">{t("fieldTitle")}</h4>
+            </div>
+            <div className="space-y-3">
+              {fc.temperature_c != null && <MetricRow label={t("airTemp")} value={`${fc.temperature_c.toFixed(1)}°C`} />}
+              {fc.soil_moisture_0_7cm != null && <MetricRow label="Soil Moisture" value={`${(fc.soil_moisture_0_7cm * 100).toFixed(1)}%`} />}
+            </div>
+          </div>
         )}
-
-        <div style={{ marginTop: 20 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{t("confidenceLabel")}</span>
-            <span style={{ fontSize: 13, fontWeight: 800, color: "var(--emerald-400)" }}>
-              {confidencePercent}%
-            </span>
-          </div>
-          <div className="confidence-track" style={{ height: 8 }}>
-            <div className="confidence-fill" style={{ width: `${confidencePercent}%` }} />
-          </div>
-        </div>
-
-        {!isHealthy && (
-          <div style={{ marginTop: 18, display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <div className="feature-pill" style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>
-              <div
-                style={{ width: 8, height: 8, borderRadius: "50%", background: severityColor }}
-              />
-              {t("matchLabel")}: <span style={{ color: severityColor }}>{severityLabel}</span>
+        {recommendation && showAirSection && (
+          <div className="bg-surface-container-lowest rounded-2xl p-5 border border-outline-variant/15 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <Wind size={18} className="text-primary" />
+              <h4 className="text-sm font-bold text-on-surface uppercase tracking-tight">Air Intelligence</h4>
             </div>
-            <div className="feature-pill" style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>
-              <ActivityIcon /> {t("pipelineBadge")}
+            <div className="space-y-3">
+              {aq?.us_aqi != null && <MetricRow label="AQI (US)" value={Math.round(aq.us_aqi).toString()} />}
+              <p className="text-[11px] text-on-surface-variant font-medium leading-relaxed mt-2">{yA}</p>
             </div>
+          </div>
+        )}
+        {recommendation && (nonEmpty(yU) || isHealthy) && (
+          <div className="bg-primary-container/20 rounded-2xl p-5 border border-primary/20 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp size={18} className="text-primary" />
+              <h4 className="text-sm font-bold text-primary uppercase tracking-tight">Yield Forecast</h4>
+            </div>
+            <p className="text-[13px] text-on-surface-variant font-medium leading-relaxed italic">{yU || "Ecosystem optimized for maximum seasonal yield."}</p>
           </div>
         )}
       </div>
 
-      {recommendation && nonEmpty(yU) && (
-        <div
-          className="glass-card animate-fade-in-up"
-          style={{
-            padding: 24,
-            borderLeft: "4px solid var(--warning)",
-            background: "rgba(245, 158, 11, 0.04)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-            <TrendingUp size={20} className="text-warning" />
-            <h3 style={{ fontSize: 16, fontWeight: 800, color: "var(--warning)", letterSpacing: "-0.01em" }}>
-              {t("yieldUpliftTitle")}
-            </h3>
-          </div>
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.7, margin: 0, fontWeight: 500 }}>
-            {yU}
-          </p>
-          <p style={{ fontSize: 11, color: "var(--text-dim)", marginTop: 12, fontWeight: 600 }}>
-            {t("yieldUpliftHint")}
-          </p>
-        </div>
-      )}
-
-      {hasField && fc && (
-        <div className="glass-card" style={{ padding: 24 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-            <Thermometer size={18} className="text-emerald-400" />
-            <h3 style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)" }}>
-              {t("fieldTitle")}
-            </h3>
-          </div>
-          <p style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 16, fontWeight: 600 }}>{t("fieldHint")}</p>
-          <FieldGrid conditions={fc} t={t} />
-        </div>
-      )}
-
-      {recommendation && showAirSection && (
-        <div
-          className="glass-card"
-          style={{ padding: 24, borderLeft: "4px solid #60a5fa", background: "rgba(96, 165, 250, 0.04)" }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-            <Wind size={18} className="text-blue-400" />
-            <h3 style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)" }}>
-              {t("airTitle")}
-            </h3>
-          </div>
-          <p style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 16, fontWeight: 600 }}>{t("airHint")}</p>
-          {hasAirMetrics(aq) && <AirQualityGrid aq={aq!} t={t} />}
-          {nonEmpty(yA) && (
-            <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: "var(--emerald-400)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                {t("airAdviceTitle")}
-              </div>
-              <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.7, margin: 0, fontWeight: 500 }}>
-                {yA}
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
+      {/* Recommendations Tabs */}
       {recommendation && !isHealthy && (
-        <div className="glass-card" style={{ padding: 24 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)", marginBottom: 16, letterSpacing: "-0.01em" }}>
-            {t("diseaseMgmt")}
-          </h3>
-
-          <div
-            style={{
-              display: "flex",
-              gap: 8,
-              marginBottom: 20,
-              background: "rgba(0,0,0,0.2)",
-              padding: 6,
-              borderRadius: 16,
-            }}
-          >
-            {(["treatment", "prevention", "fertilizer"] as const).map((tab) => (
-              <button
-                key={tab}
-                id={`tab-${tab}`}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                style={{
-                  flex: 1,
-                  padding: "10px 12px",
-                  borderRadius: 12,
-                  fontSize: 12,
-                  fontWeight: 700,
-                  border: "none",
-                  cursor: "pointer",
-                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                  background: activeTab === tab ? "var(--emerald-600)" : "transparent",
-                  color: activeTab === tab ? "#fff" : "var(--text-muted)",
-                  boxShadow: activeTab === tab ? "0 4px 12px rgba(16, 185, 129, 0.25)" : "none"
-                }}
-              >
-                {tab === "treatment" ? t("tabTreatment") : tab === "prevention" ? t("tabPrevention") : t("tabFertilizer")}
-              </button>
-            ))}
+        <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant/15 shadow-sm overflow-hidden">
+          <div className="flex border-b border-outline-variant/10 bg-surface-container-low p-1">
+             <TabBtn active={activeTab === 'treatment'} onClick={() => setActiveTab('treatment')} label={t("tabTreatment")} />
+             <TabBtn active={activeTab === 'prevention'} onClick={() => setActiveTab('prevention')} label={t("tabPrevention")} />
+             <TabBtn active={activeTab === 'fertilizer'} onClick={() => setActiveTab('fertilizer')} label={t("tabFertilizer")} />
           </div>
-
-          <div
-            className="animate-fade-in"
-            key={activeTab}
-            style={{
-              background: "rgba(16, 185, 129, 0.03)",
-              border: "1px solid var(--border)",
-              borderRadius: 20,
-              padding: 20,
-              fontSize: 14,
-              color: "var(--text-secondary)",
-              lineHeight: 1.8,
-              fontWeight: 500
-            }}
-          >
-            {activeTab === "treatment" && recommendation.treatment}
-            {activeTab === "prevention" && recommendation.prevention}
-            {activeTab === "fertilizer" && recommendation.fertilizer}
-          </div>
-
-          {recommendation.confidence_note && (
-            <div style={{ marginTop: 16, padding: "12px 16px", borderRadius: 12, background: "rgba(255,255,255,0.02)", display: "flex", gap: 10 }}>
-              <Info size={14} className="text-emerald-400 mt-0.5" />
-              <p style={{ fontSize: 11, color: "var(--text-dim)", fontWeight: 500, lineHeight: 1.5, margin: 0 }}>
-                {recommendation.confidence_note}
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {recommendation && hasYieldPlan && (
-        <div className="glass-card" style={{ padding: 24, borderLeft: "4px solid var(--emerald-500)" }}>
-          <h3 style={{ fontSize: 17, fontWeight: 800, color: "var(--emerald-400)", marginBottom: 6, letterSpacing: "-0.01em" }}>
-            {t("yieldTitle")}
-          </h3>
-          <p style={{ fontSize: 11, color: "var(--text-dim)", marginBottom: 20, fontWeight: 600 }}>{t("yieldHint")}</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            {nonEmpty(yI) && <YieldBlock icon={<Waves size={18} />} title={t("yieldWater")} text={yI!} />}
-            {nonEmpty(yS) && <YieldBlock icon={<Sun size={18} />} title={t("yieldSoil")} text={yS!} />}
-            {nonEmpty(yC) && <YieldBlock icon={<Sprout size={18} />} title={t("yieldCrop")} text={yC!} />}
+          <div className="p-6">
+            <p className="text-on-surface-variant text-[15px] leading-relaxed font-medium">
+              {activeTab === 'treatment' && recommendation.treatment}
+              {activeTab === 'prevention' && recommendation.prevention}
+              {activeTab === 'fertilizer' && recommendation.fertilizer}
+            </p>
           </div>
         </div>
       )}
 
-      {isHealthy && (
-        <div
-          className="glass-card animate-fade-in-up delay-100"
-          style={{
-            padding: 32,
-            textAlign: "center",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--success-bg)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--emerald-400)", marginBottom: 16 }}>
-            <CheckCircle size={32} strokeWidth={3} />
-          </div>
-          <h3 style={{ fontSize: 18, fontWeight: 800, color: "var(--emerald-400)", marginBottom: 8 }}>
-            {t("healthyCardTitle")}
-          </h3>
-          <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.7, maxWidth: 300 }}>
-            {t("healthyCardDesc")}
-          </p>
-        </div>
-      )}
-
-      <div className="result-actions" style={{ gap: 12 }}>
-        <button id="btn-scan-another" type="button" onClick={onReset} className="btn-primary" style={{ flex: 2, height: 56 }}>
+      {/* Global Actions */}
+      <div className="flex flex-col sm:flex-row gap-4 pt-4">
+        <button onClick={onReset} className="flex-1 h-14 bg-primary text-on-primary rounded-full font-bold flex items-center justify-center gap-3 shadow-lg hover:bg-primary-dim transition-all">
           <RotateCcw size={20} />
           {t("scanAnother")}
         </button>
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
-          <button id="btn-copy-report" type="button" onClick={handleCopyReport} className="btn-ghost" style={{ flex: 1, minHeight: 48 }}>
-            {copied ? <><CheckCircle size={18} /> {t("copied")}</> : <><Share2 size={18} /> {t("copyReport")}</>}
+        <div className="flex gap-4 flex-1">
+          <button onClick={handleDownloadPdf} disabled={isDownloading} className="flex-1 h-14 bg-surface-container-high text-on-surface rounded-full font-bold flex items-center justify-center gap-3 border border-outline-variant/15 hover:bg-surface-container-highest transition-all">
+            {isDownloading ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
+            PDF
           </button>
-          <button id="btn-download-pdf" type="button" onClick={handleDownloadPdf} disabled={isDownloading} className="btn-secondary" style={{ flex: 1, minHeight: 48, background: "rgba(16,185,129,0.1)", color: "var(--emerald-500)", border: "1px solid rgba(16,185,129,0.3)" }}>
-            {isDownloading ? <><Loader2 size={18} className="animate-spin" /> ...</> : <><Download size={18} /> PDF</>}
+          <button onClick={handleCopyReport} className="flex-1 h-14 bg-surface-container-high text-on-surface rounded-full font-bold flex items-center justify-center gap-3 border border-outline-variant/15 hover:bg-surface-container-highest transition-all">
+            {copied ? <CheckCircle size={20} className="text-primary" /> : <Share2 size={20} />}
+            {copied ? "Copied" : "Share"}
           </button>
         </div>
       </div>
     </div>
+  );
+}
+
+function MetricRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between items-center text-[12px]">
+      <span className="text-on-surface-variant font-medium">{label}</span>
+      <span className="text-on-surface font-bold">{value}</span>
+    </div>
+  );
+}
+
+function TabBtn({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+  return (
+    <button 
+      onClick={onClick}
+      className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider transition-all ${
+        active 
+          ? 'bg-surface-container-lowest text-primary shadow-sm' 
+          : 'text-on-surface-variant hover:text-on-surface'
+      }`}
+    >
+      {label}
+    </button>
   );
 }
 

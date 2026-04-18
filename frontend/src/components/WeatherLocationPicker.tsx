@@ -27,91 +27,74 @@ export default function WeatherLocationPicker({
   const { t } = useLocale();
 
   return (
-    <div
-      className="glass-card"
-      style={{
-        padding: 20,
-        marginBottom: 16,
-        borderLeft: "4px solid var(--emerald-400)",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-        <CloudSun size={18} className="text-emerald-400" />
-        <div style={{ fontWeight: 800, fontSize: 15, color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
-          {t("weatherLocTitle")}
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-primary-container/30 flex items-center justify-center text-primary">
+          <CloudSun size={20} />
+        </div>
+        <div>
+          <h4 className="font-bold text-on-surface text-base leading-tight">{t("weatherLocTitle")}</h4>
+          <p className="text-xs text-on-surface-variant font-medium mt-0.5">{t("weatherLocHint")}</p>
         </div>
       </div>
-      <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 16, fontWeight: 500 }}>
-        {t("weatherLocHint")}
-      </p>
 
-      <div className="locale-segment" style={{ marginBottom: 16, width: "100%", maxWidth: 1000, background: "rgba(0,0,0,0.2)", padding: 4, borderRadius: 14 }}>
+      <div className="flex bg-surface-container-low rounded-full p-1 border border-outline-variant/10">
         <button
           type="button"
-          aria-current={mode === "gps" ? "true" : undefined}
-          disabled={disabled}
           onClick={() => onModeChange("gps")}
-          style={{ flex: 1, borderRadius: 10, fontSize: 12, fontWeight: 700, gap: 8 }}
+          disabled={disabled}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-xs font-bold transition-all ${
+            mode === "gps" 
+              ? "bg-surface-container-lowest text-primary shadow-sm" 
+              : "text-on-surface-variant hover:text-on-surface"
+          }`}
         >
-          <Navigation size={14} />
+          <Navigation size={14} className={mode === "gps" ? "text-primary" : ""} />
           {t("weatherLocGps")}
         </button>
         <button
           type="button"
-          aria-current={mode === "manual" ? "true" : undefined}
-          disabled={disabled}
           onClick={() => onModeChange("manual")}
-          style={{ flex: 1, borderRadius: 10, fontSize: 12, fontWeight: 700, gap: 8 }}
+          disabled={disabled}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full text-xs font-bold transition-all ${
+            mode === "manual" 
+              ? "bg-surface-container-lowest text-primary shadow-sm" 
+              : "text-on-surface-variant hover:text-on-surface"
+          }`}
         >
-          <MapPin size={14} />
+          <MapPin size={14} className={mode === "manual" ? "text-primary" : ""} />
           {t("weatherLocManual")}
         </button>
       </div>
 
       {mode === "manual" && (
-        <div className="animate-fade-in" style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "flex-end" }}>
-          <label style={{ flex: "1 1 140px", display: "flex", flexDirection: "column", gap: 6 }}>
-            <span style={{ fontSize: 10, fontWeight: 800, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{t("weatherLat")}</span>
+        <div className="grid grid-cols-2 gap-4 animate-fade-in">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-secondary px-1" htmlFor="lat">{t("weatherLat")}</label>
             <input
+              id="lat"
               type="text"
               inputMode="decimal"
               disabled={disabled}
               placeholder="e.g. 28.61"
               value={manualLat}
               onChange={(e) => onManualLat(e.target.value)}
-              style={{
-                padding: "12px 14px",
-                borderRadius: 12,
-                border: "1px solid var(--border)",
-                background: "rgba(0,0,0,0.2)",
-                color: "var(--text-primary)",
-                fontSize: 14,
-                width: "100%",
-                fontWeight: 600
-              }}
+              className="w-full bg-surface-container-low border border-outline-variant/15 rounded-xl py-3 px-4 text-on-surface font-medium text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
             />
-          </label>
-          <label style={{ flex: "1 1 140px", display: "flex", flexDirection: "column", gap: 6 }}>
-            <span style={{ fontSize: 10, fontWeight: 800, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{t("weatherLon")}</span>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-secondary px-1" htmlFor="lon">{t("weatherLon")}</label>
             <input
+              id="lon"
               type="text"
               inputMode="decimal"
               disabled={disabled}
+              placeholder="e.g. 77.23"
               value={manualLon}
-              placeholder="e.g. 77.21"
               onChange={(e) => onManualLon(e.target.value)}
-              style={{
-                padding: "12px 14px",
-                borderRadius: 12,
-                border: "1px solid var(--border)",
-                background: "rgba(0,0,0,0.2)",
-                color: "var(--text-primary)",
-                fontSize: 14,
-                width: "100%",
-                fontWeight: 600
-              }}
+              className="w-full bg-surface-container-low border border-outline-variant/15 rounded-xl py-3 px-4 text-on-surface font-medium text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
             />
-          </label>
+          </div>
         </div>
       )}
     </div>

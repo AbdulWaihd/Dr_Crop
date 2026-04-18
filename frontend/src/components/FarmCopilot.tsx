@@ -4,7 +4,7 @@ import { useLocale } from "@/contexts/LocaleContext";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { speechLangChainFor } from "@/lib/i18n";
 import { askFarmCopilot } from "@/services/api";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { 
   MessageSquare, 
   Mic, 
@@ -13,19 +13,33 @@ import {
   Loader2, 
   Sparkles,
   AlertCircle,
-  Download
+  Download,
+  Bot,
+  User
 } from "lucide-react";
 import { downloadPdfFromHtml } from "@/lib/downloadPdf";
 import { generateReportHtml } from "@/lib/pdfGenerator";
 
+interface Message {
+  role: 'bot' | 'user';
+  content: string;
+  isPdfAvailable?: boolean;
+}
+
 export default function FarmCopilot() {
   const { t, locale, isRtl } = useLocale();
   const [q, setQ] = useState("");
-  const [answer, setAnswer] = useState<string | null>(null);
-  const [lastAsked, setLastAsked] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([
+    { role: 'bot', content: t("welcomeMessage") }
+  ]);
   const [loading, setLoading] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
 
   const appendVoice = useCallback((chunk: string) => {
     setQ((prev) => {
@@ -49,74 +63,35 @@ export default function FarmCopilot() {
     stopVoice();
   }, [locale, stopVoice]);
 
-  useEffect(() => {
-    if (lastAsked && answer && !loading) {
-      // User changed locale, let's re-ask the last question to get translated answer
-      async function retranslate() {
-        setLoading(true);
-        setError(null);
-        try {
-          const a = await askFarmCopilot(lastAsked!, locale);
-          setAnswer(a);
-        } catch (e) {
-          // ignore or show minor error
-        } finally {
-          setLoading(false);
-        }
-      }
-      retranslate();
-    }
-  }, [locale]); // intentionally leaving lastAsked and answer out of deps so it only triggers on locale change.
-
-  const voiceErrorLabel = useMemo(() => {
-    if (!lastError) return null;
-    if (lastError === "unsupported") return t("copilotVoiceNotSupported");
-    if (lastError === "not-allowed") return t("copilotVoicePermission");
-    if (lastError === "network") return t("copilotVoiceNetwork");
-    if (lastError === "audio-capture") return t("copilotVoiceMic");
-    if (lastError === "failed-start") return t("copilotVoiceStartFail");
-    if (lastError === "language-not-supported") return t("copilotVoiceLangUnsupported");
-    return t("copilotVoiceError");
-  }, [lastError, t]);
-
   const submit = async () => {
     const text = q.trim();
-    if (loading) return;
-    if (!text) {
-      setError(t("copilotNeedQuestion"));
-      setAnswer(null);
-      return;
-    }
+    if (loading || !text) return;
+    
+    setMessages(prev => [...prev, { role: 'user', content: text }]);
+    setQ("");
     setLoading(true);
     setError(null);
-    setAnswer(null);
-    setLastAsked(text);
     stopVoice();
+
     try {
       const a = await askFarmCopilot(text, locale);
-      setAnswer(a);
+      setMessages(prev => [...prev, { role: 'bot', content: a, isPdfAvailable: true }]);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
-      setError(
-        msg.toLowerCase().includes("llm") || msg.toLowerCase().includes("api key")
+      const errorMsg = msg.toLowerCase().includes("llm") || msg.toLowerCase().includes("api key")
           ? t("copilotOffline")
-          : t("copilotError")
-      );
+          : t("copilotError");
+      setError(errorMsg);
+      setMessages(prev => [...prev, { role: 'bot', content: errorMsg }]);
     } finally {
       setLoading(false);
     }
   };
 
-  const onVoiceClick = () => {
-    clearError();
-    toggle();
-  };
-
-  const downloadReport = async () => {
-    if (!answer || !lastAsked) return;
+  const downloadReport = async (msg: string, userQ: string) => {
     setIsDownloading(true);
     try {
-      const htmlContent = `<strong>Question:</strong><br/>${lastAsked}<br/><br/><strong>Response:</strong><br/>${answer}`;
+      const htmlContent = `<strong>Question:</strong><br/>${userQ}<br/><br/><strong>Response:</strong><br/>${msg}`;
       await downloadPdfFromHtml(generateReportHtml("Farm Copilot Report", htmlContent), "DrCrop-Copilot-Report.pdf");
     } finally {
       setIsDownloading(false);
@@ -124,182 +99,104 @@ export default function FarmCopilot() {
   };
 
   return (
-    <section
-      id="farm-copilot"
-      className="glass-card animate-fade-in-up delay-100"
-      style={{ padding: 24, marginBottom: 20, borderLeft: "4px solid var(--emerald-500)" }}
-    >
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-          <MessageSquare size={20} className="text-emerald-400" />
-          <h2 style={{ fontSize: 18, fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
-            {t("copilotTitle")}
-          </h2>
+    <div className="flex flex-col h-full bg-surface-container-lowest">
+      {/* Copilot Header */}
+      <div className="p-3 sm:p-5 border-b border-surface-container-low flex items-center gap-3 bg-surface">
+        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container">
+          <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6" />
         </div>
-        <p style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6, margin: 0, fontWeight: 500 }}>
-          {t("copilotSubtitle")}
-        </p>
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          gap: 12,
-          alignItems: "stretch",
-          marginBottom: 10,
-          flexDirection: isRtl ? "row-reverse" : "row",
-        }}
-      >
-        <textarea
-          dir={isRtl ? "rtl" : "ltr"}
-          value={q}
-          onChange={(e) => {
-            if (listening) stopVoice();
-            setQ(e.target.value);
-            setError(null);
-          }}
-          placeholder={t("copilotPlaceholder")}
-          rows={3}
-          disabled={loading}
-          className="copilot-textarea"
-          style={{
-            flex: 1,
-            resize: "none",
-            minHeight: 100,
-            padding: 16,
-            borderRadius: 16,
-            border: "1px solid var(--border)",
-            background: "rgba(0,0,0,0.2)",
-            color: "var(--text-primary)",
-            fontSize: 14,
-            lineHeight: 1.6,
-            fontWeight: 500
-          }}
-        />
-        <button
-          type="button"
-          title={listening ? t("copilotVoiceStop") : t("copilotVoiceStart")}
-          onClick={onVoiceClick}
-          disabled={loading || !supported}
-          className={listening ? "btn-secondary" : "btn-ghost"}
-          style={{
-            flexShrink: 0,
-            width: 64,
-            borderRadius: 16,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
-            border: listening ? "1px solid rgba(248,113,113,0.3)" : "1px solid var(--border)",
-            background: listening ? "rgba(248,113,113,0.05)" : "rgba(255,255,255,0.02)",
-            opacity: !supported ? 0.3 : 1,
-            transition: "all 0.2s"
-          }}
-          aria-pressed={listening}
-        >
-          {listening ? <MicOff size={20} className="text-danger" /> : <Mic size={20} className="text-emerald-400" />}
-          <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: listening ? "var(--danger)" : "var(--text-dim)" }}>
-            {listening ? t("copilotVoiceStop") : t("copilotVoiceStart")}
-          </span>
-        </button>
-      </div>
-
-      {listening && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: interim ? 6 : 12 }}>
-          <div className="pulse-dot" style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--emerald-400)" }} />
-          <p style={{ fontSize: 12, color: "var(--emerald-400)", fontWeight: 700, margin: 0 }}>
-            {t("copilotVoiceListening")}
+        <div>
+          <h3 className="font-bold text-on-surface text-base sm:text-lg leading-tight">{t("copilotTitle")}</h3>
+          <p className="text-[10px] sm:text-xs text-primary font-medium flex items-center gap-1">
+            <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary inline-block ${loading ? 'animate-pulse' : ''}`}></span> 
+            {loading ? t("copilotThinking") : t("badgeOnline")}
           </p>
         </div>
-      )}
-      {listening && interim.trim() ? (
-        <p
-          dir={isRtl ? "rtl" : "ltr"}
-          style={{
-            fontSize: 13,
-            color: "var(--text-dim)",
-            fontStyle: "italic",
-            marginBottom: 12,
-            marginTop: 0,
-            lineHeight: 1.5,
-            padding: "0 10px",
-            borderLeft: "2px solid rgba(255,255,255,0.1)"
-          }}
-        >
-          &ldquo;{interim}&rdquo;
-        </p>
-      ) : null}
+      </div>
 
-      {voiceErrorLabel && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, color: "var(--warning)" }}>
-          <AlertCircle size={14} />
-          <p style={{ fontSize: 12, fontWeight: 600, margin: 0 }}>{voiceErrorLabel}</p>
-        </div>
-      )}
+      {/* Chat Stream */}
+      <div className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-4 bg-surface-bright custom-scrollbar">
+        {messages.map((msg, i) => (
+          <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'max-w-[90%]'}`}>
+            {msg.role === 'bot' && (
+              <div className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container shrink-0 mt-1 shadow-sm">
+                <Bot size={16} />
+              </div>
+            )}
+            <div className={`p-4 rounded-2xl text-sm leading-relaxed ${
+              msg.role === 'user' 
+                ? 'bg-primary text-on-primary rounded-tr-sm' 
+                : 'bg-surface-container-low text-on-surface rounded-tl-sm border border-outline-variant/10'
+            }`}>
+              <p className={isRtl ? 'text-right' : 'text-left'}>{msg.content}</p>
+              
+              {msg.isPdfAvailable && (
+                <button
+                  onClick={() => {
+                    const userMsg = messages.filter(m => m.role === 'user').pop();
+                    downloadReport(msg.content, userMsg?.content || "User Question");
+                  }}
+                  disabled={isDownloading}
+                  className="mt-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary-dim transition-colors"
+                >
+                  {isDownloading ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
+                  {t("downloadReport")}
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+        {loading && (
+          <div className="flex gap-3 max-w-[90%] animate-pulse">
+            <div className="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant shrink-0 mt-1">
+              <Bot size={16} />
+            </div>
+            <div className="bg-surface-container-low p-4 rounded-xl rounded-tl-sm text-sm text-on-surface-variant italic">
+              {t("copilotThinking")}
+            </div>
+          </div>
+        )}
+        <div ref={chatEndRef} />
+      </div>
 
-      <button
-        type="button"
-        className="btn-primary"
-        style={{ height: 48, padding: "0 28px", borderRadius: 12, gap: 10 }}
-        disabled={loading}
-        onClick={submit}
-        aria-label={t("copilotSend")}
-      >
-        {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-        {loading ? t("copilotThinking") : t("copilotSend")}
-      </button>
-
-      {error && (
-        <div style={{ marginTop: 16, padding: "12px 16px", borderRadius: 12, background: "rgba(248,113,113,0.05)", border: "1px solid rgba(248,113,113,0.2)", display: "flex", gap: 10, color: "var(--danger)" }}>
-          <AlertCircle size={16} />
-          <p style={{ fontSize: 13, fontWeight: 500, margin: 0, lineHeight: 1.5 }}>{error}</p>
-        </div>
-      )}
-
-      {answer && (
-        <div
-          className="animate-fade-in"
-          style={{
-            marginTop: 20,
-            padding: 20,
-            borderRadius: 20,
-            background: "rgba(16, 185, 129, 0.03)",
-            border: "1px solid var(--border)",
-            boxShadow: "inset 0 2px 10px rgba(0,0,0,0.2)"
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-            <Sparkles size={16} className="text-emerald-400" />
-            <p style={{ fontSize: 12, fontWeight: 800, color: "var(--emerald-400)", margin: 0, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-              {t("copilotExpertLabel")}
-            </p>
-            <button
-              onClick={downloadReport}
-              disabled={isDownloading}
-              type="button"
-              className="btn-ghost"
-              style={{ marginInlineStart: "auto", fontSize: 12, padding: "4px 10px", gap: 6, color: "var(--emerald-500)", border: "1px solid rgba(16,185,129,0.3)" }}
-              title="Download PDF"
+      {/* Input Area */}
+      <div className="p-4 bg-surface-container-lowest border-t border-surface-container-low">
+        {listening && (
+          <div className="flex items-center gap-2 mb-2 px-2">
+            <div className="w-2 h-2 bg-error rounded-full animate-pulse" />
+            <span className="text-xs text-error font-bold uppercase tracking-tighter">{t("copilotVoiceListening")}</span>
+            <span className="text-xs text-on-surface-variant italic truncate">{interim}</span>
+          </div>
+        )}
+        
+        <div className="relative flex items-center gap-2">
+          <div className="relative flex-1">
+            <input 
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && submit()}
+              className="w-full bg-surface-container-low border-none rounded-full pl-4 pr-12 py-3 text-sm focus:ring-2 focus:ring-primary/20 text-on-surface placeholder-on-surface-variant" 
+              placeholder={t("copilotPlaceholder")}
+              type="text"
+            />
+            <button 
+              onClick={submit}
+              disabled={loading || !q.trim()}
+              className="absolute right-1 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-primary text-on-primary rounded-full hover:bg-primary-dim transition-colors disabled:opacity-50"
             >
-              {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-              PDF
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </button>
           </div>
-          <div
-            dir={isRtl ? "rtl" : "ltr"}
-            style={{
-              fontSize: 14,
-              color: "var(--text-secondary)",
-              lineHeight: 1.8,
-              whiteSpace: "pre-wrap",
-              fontWeight: 500
-            }}
+          <button 
+            onClick={toggle}
+            className={`w-11 h-11 flex items-center justify-center rounded-full transition-all ${listening ? 'bg-error text-on-error animate-pulse' : 'bg-surface-container-high text-primary hover:bg-surface-container-highest'}`}
           >
-            {answer}
-          </div>
+            {listening ? <MicOff size={20} /> : <Mic size={20} />}
+          </button>
         </div>
-      )}
-    </section>
+        {lastError && <p className="text-[10px] text-error mt-2 px-2 font-medium">{t("copilotError")}</p>}
+      </div>
+    </div>
   );
 }
+
