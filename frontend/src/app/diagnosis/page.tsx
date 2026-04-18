@@ -15,7 +15,7 @@ import {
   Sprout,
   Menu
 } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import FarmCopilot from "@/components/FarmCopilot";
 import ImageUploader from "@/components/ImageUploader";
 import ResultCard from "@/components/ResultCard";
@@ -70,7 +70,19 @@ export default function DiagnosisPage() {
     hi: "हि",
     ur: "اردو",
   };
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Mock login state for guest access demo
+  const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const auth = localStorage.getItem("dr-crop-auth");
+    if (!auth) {
+      router.replace("/auth");
+    } else {
+      setIsLoggedIn(true);
+      setIsCheckingAuth(false);
+    }
+  }, [router]);
   const [loading, setLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState<any>("statusUploading");
 
@@ -104,6 +116,20 @@ export default function DiagnosisPage() {
       retranslateInfo();
     }
   }, [locale]);
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center flex-col gap-4">
+        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+        <p className="font-bold text-on-surface-variant animate-pulse">Authenticating...</p>
+      </div>
+    );
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem("dr-crop-auth");
+    router.replace("/auth");
+  };
 
   const handleImageSelected = async (file: File) => {
     setLoading(true);
@@ -204,21 +230,13 @@ export default function DiagnosisPage() {
             ))}
         </div>
         <div className="flex flex-col gap-2 flex-grow">
-          {isLoggedIn ? (
-            <button 
-              onClick={() => { setActiveTab("diagnosis"); setIsSidebarOpen(false); }}
-              className={`flex items-center gap-3 px-4 py-3 transition-all rounded-xl w-full text-left ${activeTab === "diagnosis" ? "bg-surface-container-lowest text-primary font-semibold shadow-sm" : "text-on-surface-variant hover:text-primary hover:bg-surface-container"}`}
-            >
-              <span className="material-symbols-outlined">grid_view</span>
-              <span>{t("navDashboard")}</span>
-            </button>
-          ) : (
-            <div className="flex items-center gap-3 px-4 py-3 text-on-surface-variant/40 cursor-not-allowed group relative">
-              <span className="material-symbols-outlined">grid_view</span>
-              <span>{t("navDashboard")}</span>
-              <span className="absolute right-4 text-[10px] bg-surface-container-highest px-2 py-0.5 rounded-full font-bold opacity-0 group-hover:opacity-100 transition-opacity">Locked</span>
-            </div>
-          )}
+          <button 
+            onClick={() => { setActiveTab("diagnosis"); setIsSidebarOpen(false); }}
+            className={`flex items-center gap-3 px-4 py-3 transition-all rounded-xl w-full text-left ${activeTab === "diagnosis" ? "bg-surface-container-lowest text-primary font-semibold shadow-sm" : "text-on-surface-variant hover:text-primary hover:bg-surface-container"}`}
+          >
+            <span className="material-symbols-outlined">grid_view</span>
+            <span>{t("navDashboard")}</span>
+          </button>
           
           <button 
             onClick={() => { setActiveTab("diagnosis"); setIsSidebarOpen(false); }}
@@ -292,13 +310,12 @@ export default function DiagnosisPage() {
                   <span className="material-symbols-outlined">notifications</span>
                   <span className="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
                 </button>
-                {isLoggedIn ? (
-                  <img alt="User profile" className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover outline outline-1 outline-outline-variant/30" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXQrafR2TjWMz21nIedUmQGUvFJpuPVuKDwtbRGHN4KASx5k30-a3CL7jBUlePznsB_KXxkMojgVZdfkG9Tjb722I-Us9Z2t8VnITQFnjgmp070WIzJcOlVtYRjftDdnF5wACdo2t1Z5Xskw9IIZKJwE_i1Q2hLvnTdemiv6evowHCJCoMAGkpcDT3X12E94_o84_oiQ9GT1loXPsDOSZ8JI4UEtELFuNkaoyaroJimdWVrRThCxc_oiLW5B2R0RPlVpO2zJAlI-SP"/>
-                ) : (
-                  <Link href="/auth">
-                    <button className="px-4 py-1.5 rounded-full bg-primary text-on-primary text-xs font-bold shadow-sm hover:opacity-90 transition-opacity whitespace-nowrap">{t("navLogin")}</button>
-                  </Link>
-                )}
+                  <button 
+                    onClick={handleLogout}
+                    className="px-4 py-1.5 rounded-full bg-surface-container-highest text-on-surface text-xs font-bold shadow-sm hover:bg-surface-variant transition-colors whitespace-nowrap"
+                  >
+                    Logout
+                  </button>
               </div>
           </div>
         </header>

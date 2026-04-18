@@ -12,7 +12,14 @@ const LOCALE_LABELS: Record<string, string> = {
 
 export default function LandingPage() {
   const { t, locale, setLocale, isRtl } = useLocale();
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
   const LOCALES = ["en", "hi", "ur"] as const;
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsLoggedIn(!!localStorage.getItem("dr-crop-auth"));
+    }
+  }, []);
 
   return (
     <div className={`bg-surface text-on-surface font-body antialiased min-h-screen flex flex-col ${isRtl ? 'rtl' : 'ltr'}`} dir={isRtl ? 'rtl' : 'ltr'}>
@@ -60,7 +67,7 @@ export default function LandingPage() {
               {t("landingHeroDesc")}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Link href="/diagnosis">
+              <Link href={isLoggedIn ? "/diagnosis" : "/auth"}>
                 <button className="px-8 py-4 rounded-full text-on-primary bg-gradient-to-br from-primary to-primary-dim hover:opacity-90 transition-opacity font-semibold text-lg shadow-lg flex items-center justify-center gap-2">
                   <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>add_a_photo</span>
                   {t("landingStartDiagnosis")}

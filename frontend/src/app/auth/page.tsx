@@ -1,10 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    // Mock auth delay
+    await new Promise(r => setTimeout(r, 1200));
+    localStorage.setItem("dr-crop-auth", "true");
+    router.push("/diagnosis");
+  };
 
   return (
     <div className="bg-surface text-on-surface font-body antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen flex">
@@ -71,7 +83,7 @@ export default function AuthPage() {
                 onClick={() => setIsLogin(true)}
                 className={`flex-1 py-3 px-4 rounded-full font-headline font-black text-sm transition-all text-center ${isLogin ? "bg-surface-container-lowest shadow-md text-primary" : "text-on-surface-variant hover:text-on-surface"}`}
               >
-                Sign In
+                LogIN
               </button>
               <button 
                 type="button"
@@ -83,7 +95,7 @@ export default function AuthPage() {
             </div>
 
             {/* Form Fields */}
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={handleAuth}>
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-secondary px-1" htmlFor="email text">Email Address</label>
                 <div className="relative">
@@ -128,11 +140,17 @@ export default function AuthPage() {
                 </div>
               )}
 
-              <Link href="/diagnosis">
-                <button className="w-full mt-10 bg-primary text-on-primary font-black text-xl py-5 rounded-full shadow-lg shadow-primary/20 hover:bg-primary-dim hover:-translate-y-1 transition-all active:translate-y-0" type="button">
-                  {isLogin ? "Sign In" : "Get Started"}
-                </button>
-              </Link>
+              <button 
+                disabled={isLoading}
+                className="w-full mt-10 bg-primary text-on-primary font-black text-xl py-5 rounded-full shadow-lg shadow-primary/20 hover:bg-primary-dim hover:-translate-y-1 transition-all active:translate-y-0 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-wait"
+                type="submit"
+              >
+                {isLoading ? (
+                   <span className="material-symbols-outlined animate-spin text-2xl">sync</span>
+                ) : (
+                   isLogin ? "LogIN" : "Get Started"
+                )}
+              </button>
             </form>
 
             <div className="relative flex items-center py-10">

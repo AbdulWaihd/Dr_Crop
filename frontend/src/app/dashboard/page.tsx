@@ -1,9 +1,35 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
+  const router = useRouter();
+  const [isCheckingAuth, setIsCheckingAuth] = React.useState(true);
+
+  useEffect(() => {
+    const auth = localStorage.getItem("dr-crop-auth");
+    if (!auth) {
+      router.replace("/auth");
+    } else {
+      setIsCheckingAuth(false);
+    }
+  }, [router]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("dr-crop-auth");
+    router.replace("/auth");
+  };
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center flex-col gap-4">
+        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+        <p className="font-bold text-on-surface-variant animate-pulse">Authenticating...</p>
+      </div>
+    );
+  }
   return (
     <div className="bg-surface text-on-surface font-body antialiased flex h-screen overflow-hidden">
       {/* SideNavBar */}
@@ -60,15 +86,12 @@ export default function Dashboard() {
             </div>
             <span className="md:hidden text-xl font-bold tracking-tighter text-primary">drCrop</span>
           </div>
-          <div className="flex items-center gap-2">
-            <button className="p-2 text-on-surface-variant hover:bg-surface-container transition-colors duration-200 rounded-full relative">
-              <span className="material-symbols-outlined">notifications</span>
-              <span className="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+            <button 
+              onClick={handleLogout}
+              className="px-4 py-1.5 rounded-full bg-surface-container-highest text-on-surface text-xs font-bold shadow-sm hover:bg-surface-variant transition-colors whitespace-nowrap"
+            >
+              Logout
             </button>
-            <div className="ml-2 w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant/15 cursor-pointer">
-              <img alt="User profile" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlfW6OQ1rMZln3UBKXU87sBiVhLLybsQBi6EqAUcp-8uGm1DqmiYFtyO4Srn3QiXhzM0V7UaRnxh2efJbBcs3322hUrdWZIPSrvtscssCeKOqBBCO_cWX9z6wXe5DbKgVQXjigK224wIVXPYU1OMk8Am1SRpJS4hipNHCDHFBZ2gBrJXG6L7Dc5iGOfLfbp446V-eKkF_ixA-BsZ9DtcqewkxgfB_au54Moo6VmQgfh8oAc0mWcJTCmyG_7-waHUNPkoHkX3IBUYZl"/>
-            </div>
-          </div>
         </header>
 
         {/* Scrollable Canvas */}
